@@ -1,14 +1,11 @@
 "use client";
 
-// #region agent log
+// Debug log — only active on localhost
+const isDev = typeof window !== "undefined" && window.location.hostname === "localhost";
 const log = (msg: string, data?: object) => {
-  fetch("http://127.0.0.1:7243/ingest/1e0bdbe2-926d-4093-9cba-195f03892070", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location: "GoBoopApp.tsx", message: msg, data: data ?? {}, timestamp: Date.now() }),
-  }).catch(() => {});
+  if (!isDev) return;
+  console.log(`[GoBoop] ${msg}`, data ?? "");
 };
-// #endregion
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -89,12 +86,9 @@ const SectionHeader = ({
 // --- Main App ---
 
 export default function GoBoopApp() {
-  // #region agent log
-  log("GoBoopApp-render-start", {});
   useEffect(() => {
-    log("GoBoopApp-mounted", {});
+    log("GoBoopApp mounted");
   }, []);
-  // #endregion
   const [activeTab, setActiveTab] = useLocalStorage("goboop_activeTab", "dashboard");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickActionType, setQuickActionType] = useState<string | null>(null);
@@ -130,20 +124,20 @@ export default function GoBoopApp() {
 
   const handleWalkDone = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLastWalkTime(new Date());
-    setHappiness((prev) => Math.min(100, prev + 5));
+    const now = new Date();
+    console.log("[GoBoop] Walk done!", { time: now.toISOString() });
+    setLastWalkTime(now);
+    setHappiness((prev) => {
+      const next = Math.min(100, prev + 5);
+      console.log("[GoBoop] Happiness updated:", prev, "->", next);
+      return next;
+    });
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHappiness((prev) =>
-        Math.max(80, Math.min(95, prev + (Math.random() > 0.5 ? 1 : -1)))
-      );
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  // Happiness changes only through user actions (e.g. walk done), not auto-fluctuation
 
   const navigateTo = (tab: string) => {
+    console.log("[GoBoop] Navigate to:", tab);
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -152,6 +146,7 @@ export default function GoBoopApp() {
     if (!showQuickAdd) {
       setTimeout(() => setQuickActionType(null), 300);
     }
+    console.log("[GoBoop] QuickAdd menu:", showQuickAdd ? "opened" : "closed");
   }, [showQuickAdd]);
 
   // --- Screens ---
@@ -470,7 +465,7 @@ export default function GoBoopApp() {
                   className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none"
                 />
               </div>
-              <button className="w-full py-3 bg-blue-500 text-white font-bold rounded-xl mt-2">
+              <button onClick={() => console.log("[GoBoop] Action: create trip route")} className="w-full py-3 bg-blue-500 text-white font-bold rounded-xl mt-2">
                 Создать маршрут
               </button>
             </div>
@@ -514,7 +509,7 @@ export default function GoBoopApp() {
                   />
                 </div>
               </div>
-              <button className="w-full py-3 bg-rose-500 text-white font-bold rounded-xl mt-2">
+              <button onClick={() => console.log("[GoBoop] Action: schedule vet visit")} className="w-full py-3 bg-rose-500 text-white font-bold rounded-xl mt-2">
                 Записать
               </button>
             </div>
@@ -556,7 +551,7 @@ export default function GoBoopApp() {
                   -- kg
                 </div>
               </div>
-              <button className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl mt-2">
+              <button onClick={() => console.log("[GoBoop] Action: save weight")} className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl mt-2">
                 Сохранить
               </button>
             </div>
@@ -576,10 +571,10 @@ export default function GoBoopApp() {
                 placeholder="Что купить? (Корм, игрушка)"
               />
               <div className="flex gap-2">
-                <button className="flex-1 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-neutral-300 flex items-center justify-center gap-2">
+                <button onClick={() => console.log("[GoBoop] Action: scan receipt")} className="flex-1 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-neutral-300 flex items-center justify-center gap-2">
                   <ScanLine className="w-4 h-4" /> Скан чека
                 </button>
-                <button className="flex-1 py-3 bg-amber-500 text-black font-bold rounded-xl">
+                <button onClick={() => console.log("[GoBoop] Action: add shopping item")} className="flex-1 py-3 bg-amber-500 text-black font-bold rounded-xl">
                   Добавить
                 </button>
               </div>
@@ -618,7 +613,7 @@ export default function GoBoopApp() {
                   className="bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-neutral-400 text-xs flex-1 outline-none"
                 />
               )}
-              <button className="flex-1 py-3 bg-purple-500 text-white font-bold rounded-xl">
+              <button onClick={() => console.log("[GoBoop] Action: save", quickActionType)} className="flex-1 py-3 bg-purple-500 text-white font-bold rounded-xl">
                 Сохранить
               </button>
             </div>
@@ -640,7 +635,7 @@ export default function GoBoopApp() {
                 ? "Сделать фото или выбрать из галереи"
                 : "Прикрепить файл PDF или DOC"}
             </p>
-            <button className="w-full py-3 bg-neutral-800 border border-neutral-700 text-white font-medium rounded-xl">
+            <button onClick={() => console.log("[GoBoop] Action: open", quickActionType === "photo" ? "camera" : "files")} className="w-full py-3 bg-neutral-800 border border-neutral-700 text-white font-medium rounded-xl">
               Открыть {quickActionType === "photo" ? "камеру" : "файлы"}
             </button>
           </div>
@@ -666,7 +661,7 @@ export default function GoBoopApp() {
 
             <div className="grid grid-cols-3 gap-3 sm:gap-4 overflow-y-auto pb-4 custom-scrollbar animate-slideUp">
               <QuickActionBtn
-                onClick={() => setQuickActionType("trip")}
+                onClick={() => { console.log("[GoBoop] Quick action: trip"); setQuickActionType("trip"); }}
                 icon={Plane}
                 label="Поездка"
                 color="text-blue-400"
@@ -674,7 +669,7 @@ export default function GoBoopApp() {
                 delay="0"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("vet")}
+                onClick={() => { console.log("[GoBoop] Quick action: vet"); setQuickActionType("vet"); }}
                 icon={Activity}
                 label="Врач"
                 color="text-rose-400"
@@ -682,7 +677,7 @@ export default function GoBoopApp() {
                 delay="50"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("photo")}
+                onClick={() => { console.log("[GoBoop] Quick action: photo"); setQuickActionType("photo"); }}
                 icon={ImageIcon}
                 label="Фото"
                 color="text-neutral-200"
@@ -690,7 +685,7 @@ export default function GoBoopApp() {
                 delay="100"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("file")}
+                onClick={() => { console.log("[GoBoop] Quick action: file"); setQuickActionType("file"); }}
                 icon={Paperclip}
                 label="Файл"
                 color="text-neutral-400"
@@ -698,7 +693,7 @@ export default function GoBoopApp() {
                 delay="150"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("shopping")}
+                onClick={() => { console.log("[GoBoop] Quick action: shopping"); setQuickActionType("shopping"); }}
                 icon={ShoppingBag}
                 label="Покупка"
                 color="text-amber-400"
@@ -706,7 +701,7 @@ export default function GoBoopApp() {
                 delay="200"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("note")}
+                onClick={() => { console.log("[GoBoop] Quick action: note"); setQuickActionType("note"); }}
                 icon={FileText}
                 label="Заметка"
                 color="text-purple-400"
@@ -714,7 +709,7 @@ export default function GoBoopApp() {
                 delay="250"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("reminder")}
+                onClick={() => { console.log("[GoBoop] Quick action: reminder"); setQuickActionType("reminder"); }}
                 icon={Bell}
                 label="Напоминание"
                 color="text-lime-400"
@@ -722,7 +717,7 @@ export default function GoBoopApp() {
                 delay="300"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("task")}
+                onClick={() => { console.log("[GoBoop] Quick action: task"); setQuickActionType("task"); }}
                 icon={CheckSquare}
                 label="Задача"
                 color="text-cyan-400"
@@ -730,7 +725,7 @@ export default function GoBoopApp() {
                 delay="350"
               />
               <QuickActionBtn
-                onClick={() => setQuickActionType("weight")}
+                onClick={() => { console.log("[GoBoop] Quick action: weight"); setQuickActionType("weight"); }}
                 icon={Scale}
                 label="Вес"
                 color="text-emerald-400"
@@ -781,14 +776,14 @@ export default function GoBoopApp() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-neutral-200 font-sans selection:bg-rose-500/30">
-      <QuickAddMenu />
+      {QuickAddMenu()}
 
       <div className="max-w-md mx-auto min-h-screen relative flex flex-col">
         <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
-          {activeTab === "dashboard" && <Dashboard />}
-          {activeTab === "health" && <Health />}
-          {activeTab === "travel" && <Travel />}
-          {activeTab === "family" && <Family />}
+          {activeTab === "dashboard" && Dashboard()}
+          {activeTab === "health" && Health()}
+          {activeTab === "travel" && Travel()}
+          {activeTab === "family" && Family()}
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-[#121212]/90 backdrop-blur-xl border-t border-white/5 pb-safe z-50">
@@ -807,7 +802,7 @@ export default function GoBoopApp() {
             />
             <div className="relative -top-6">
               <button
-                onClick={() => setShowQuickAdd(true)}
+                onClick={() => { console.log("[GoBoop] Quick add button pressed"); setShowQuickAdd(true); }}
                 className={`w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.3)] transform transition-all duration-300 hover:scale-105 active:scale-95 ${showQuickAdd ? "rotate-45" : ""}`}
               >
                 <Plus className="w-6 h-6" />
