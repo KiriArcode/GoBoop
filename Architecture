@@ -1,0 +1,63 @@
+Architecture Overview: PetOS
+
+1. High-Level Concept
+
+PetOS is a Single Page Application (SPA) built on React. It simulates a mobile app experience ("App-like website"). It relies on a component-based architecture with a focus on immediate UI feedback.
+
+2. Technical Stack
+
+Frontend Core: React 18+
+
+Build Tool: Vite (Fast HMR, optimized build).
+
+Language: JavaScript (ES6+) or TypeScript (Recommended for strict typing).
+
+Styling: Tailwind CSS (Utility-first).
+
+Icons: Lucide React (Lightweight, consistent SVG icons).
+
+Animations: CSS Transitions + Tailwind animate- classes.
+
+3. Data Flow (Architecture)
+
+MVP Phase (Current):
+
+State: Local React State (useState) lifted to specific Page components.
+
+Persistence: localStorage (to save state between reloads in browser).
+
+Mock Data: Hardcoded JSON objects for rapid prototyping.
+
+Production Phase (Target):
+
+Backend: Firebase (Google).
+
+Auth: Firebase Authentication (Family accounts).
+
+DB: Cloud Firestore (Real-time updates for tasks/status).
+
+Storage: Firebase Storage (Photos of docs/receipts).
+
+State Management: React Context API (for UserAuth and PetGlobalData).
+
+4. Directory Structure
+
+/src
+  /assets        # Static images/fonts
+  /components    
+    /ui          # Atomic components (Card, Button, Input)
+    /widgets     # Complex blocks (HappinessWidget, WalkTimer)
+    /modals      # Overlays (QuickActionMenu)
+  /hooks         # useWalkTimer, useHappinessIndex
+  /pages         # Dashboard, Health, Travel, Family
+  /styles        # Global CSS / Tailwind directives
+  /utils         # Helpers (date formatting, math)
+
+
+5. Key Algorithms
+
+Smart Weight Calculation: (Weight_With_Pet - Weight_Human) = Pet_Weight.
+
+Happiness Index: Decaying value over time, boosted by user interactions (Logarithmic scale).
+
+Travel Timeline: Reverse calculation from Departure_Date based on Rule_Set (e.g., Titer test = Date - 90 days).
