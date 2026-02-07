@@ -1,0 +1,79 @@
+PetOS Design System (Styleguide)
+
+Visual Language: Luxe Tech / Industrial / Bauhaus influence.
+Mood: Professional, Calm, Premium, Dark.
+
+1. Color Palette
+
+Base (Dark Mode)
+
+Background: #121212 (Main), #1A1A1A (Cards/Surface).
+
+Borders: neutral-800 (Subtle), neutral-700 (Active).
+
+Text: white (Headings), neutral-400 (Body/Secondary).
+
+Accents (Functional)
+
+Rose Gold (Health/Urgent): Tailwind rose-500 / rose-400.
+
+Use: Alerts, Medical info, Heart icon.
+
+Neon Lime (Activity/Walks): Tailwind lime-400 / lime-500.
+
+Use: Action buttons, Progress bars, Success states.
+
+Amber (Warning/Gamification): Tailwind amber-400 / amber-500.
+
+Use: Trophies, AI interaction, Attention needed.
+
+Electric Blue (Travel): Tailwind blue-500 / blue-400.
+
+Use: Flights, Documents, Information.
+
+2. Typography
+
+Font Family: Sans-serif (System default or Inter).
+
+Headings: Bold, Tight tracking.
+
+Labels: Uppercase, wide tracking, small size (text-[10px], tracking-wider).
+
+Numbers: Monospaced for timers and weights (font-mono).
+
+3. Components
+
+Card (The Building Block)
+
+<div className="bg-[#1A1A1A] border border-neutral-800 rounded-2xl p-4 shadow-lg">
+  {/* Content */}
+</div>
+
+
+Quick Action Button (Circle)
+
+Size: w-14 h-14
+
+Shape: rounded-full
+
+Interaction: active:scale-95
+
+Shadow: shadow-lg shadow-[color]/20
+
+Input Fields
+
+Background: bg-neutral-900
+
+Border: border-neutral-700
+
+Focus: focus:border-[AccentColor]
+
+Radius: rounded-xl or rounded-2xl
+
+4. Effects
+
+Glassmorphism: bg-black/60 backdrop-blur-md (For Modals/Bottom Sheets).
+
+Gradients: Subtle linear gradients from-neutral-800 to-neutral-900 for depth.
+
+Animation: transition-all duration-300 for all interactive elements.
