@@ -1,0 +1,81 @@
+PetOS Feature List
+
+Core Status
+
+ID: F-001
+Name: Smart Dashboard (Главный Хаб)
+Description: Сводный экран, показывающий статус питомца, индекс счастья и ближайшие критические задачи.
+UI Elements:
+
+Header: Имя, статус (дома/гуляет), Индекс Счастья (виджет).
+
+Walk Block: Статус прогулки, таймер "прошло времени", кнопка действия.
+
+Upcoming Events: Мини-карточки (Врач, Поездка).
+
+Family Leaderboard: Мини-виджет лидера недели.
+
+Quick Actions
+
+ID: F-002
+Name: Quick Action Hub ("Плюсик")
+Description: Многоуровневое меню для быстрого ввода данных без перехода на другие экраны.
+UI Elements:
+
+Bottom Sheet (Шторка).
+
+AI Chat Input: Строка ввода для текстовых команд.
+
+Grid 3x3: Кнопки (Поездка, Врач, Вес, Фото, Файл, Покупка, Заметка, Напоминание, Задача).
+
+Drill-down Forms: Формы ввода для каждого действия внутри шторки.
+
+Health Module
+
+ID: F-003
+Name: Health & Medical Records
+Description: Управление здоровьем, историей болезней и весом.
+UI Elements:
+
+Active Case Card: Текущая болезнь, этапы лечения.
+
+Weight Tracker: График веса + Калькулятор "Умное взвешивание" (Человек с питомцем - Человек).
+
+Vaccine Log: Список и сроки прививок.
+
+Travel Module
+
+ID: F-004
+Name: Travel Assistant
+Description: Подготовка к релокации/путешествию.
+UI Elements:
+
+Countdown Timer: Дни до поездки.
+
+Document Checklist: Список документов со статусами (Титры, Чип, Паспорт).
+
+Urgent Alerts: Красные уведомления о критических сроках (дедлайны сдачи анализов).
+
+Family Module
+
+ID: F-005
+Name: Family Sync & Gamification
+Description: Синхронизация задач между членами семьи и геймификация рутины.
+UI Elements:
+
+Leaderboard: Рейтинг членов семьи (XP за выполнение задач).
+
+Activity Log: Кто и что сделал (история).
+
+Tasks List: Общий список задач (Купить корм, Дать таблетку).
+
+IoT Integration (Future)
+
+ID: F-006
+Name: Smart Home Connect
+Description: Интеграция с физическими устройствами.
+UI Elements:
+
+Button Widget: Статус с умной кнопки (Zigbee).
+
+Feeder Status: Данные с автокормушки.
