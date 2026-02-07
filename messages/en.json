@@ -1,0 +1,122 @@
+{
+  "nav": {
+    "home": "Home",
+    "health": "Health",
+    "travel": "Travel",
+    "family": "Family"
+  },
+  "dashboard": {
+    "petStatus": "At home, resting",
+    "happinessIndex": "Happiness Index",
+    "walks": {
+      "title": "Walks",
+      "goal": "Goal: 2 times a day",
+      "done": "Walk completed",
+      "tapToMark": "Tap to mark",
+      "elapsed": "Time elapsed",
+      "justNow": "Just now",
+      "timeAgo": "{hours}h {minutes}m ago",
+      "idea": "Walk idea",
+      "ideaText": "Bring a clicker, practice \"Heel\" command (5 min)",
+      "now": "Now"
+    },
+    "events": "Events",
+    "vetVisit": "Vet visit",
+    "vetTomorrow": "Tomorrow, 3:00 PM",
+    "vetDetails": "Ear checkup",
+    "travelCity": "Berlin",
+    "travelDays": "In {days} days",
+    "travelAlert": "Submit titers!",
+    "family": "Family",
+    "details": "Details",
+    "familyLeader": "Husband — great job!",
+    "familyLeaderSub": "Completed morning routine"
+  },
+  "health": {
+    "title": "Health",
+    "vetVisit": "Vet visit",
+    "vetTomorrow": "Tomorrow at 3:00 PM",
+    "remaining": "Remaining",
+    "clinic": "Vet Clinic \"White Fang\"",
+    "doctor": "Dr. Smirnova (Therapist)"
+  },
+  "travel": {
+    "title": "Tbilisi → Berlin",
+    "daysLeft": "{days} days",
+    "urgentSection": "Do now",
+    "urgentTiters": "Submit antibody titers",
+    "urgentTitersDesc": "Deadline expires in 48 hours!"
+  },
+  "family": {
+    "title": "Family",
+    "champion": "Champion of the week",
+    "me": "Me",
+    "husband": "Husband"
+  },
+  "quickAdd": {
+    "title": "Quick action",
+    "aiPlaceholder": "Ask AI or say what happened...",
+    "trip": "Trip",
+    "vet": "Vet",
+    "photo": "Photo",
+    "file": "File",
+    "shopping": "Shopping",
+    "note": "Note",
+    "reminder": "Reminder",
+    "task": "Task",
+    "weight": "Weight"
+  },
+  "forms": {
+    "trip": {
+      "title": "Plan a trip",
+      "from": "From",
+      "to": "To",
+      "date": "Departure date",
+      "submit": "Create route"
+    },
+    "vet": {
+      "title": "Vet visit",
+      "clinic": "Clinic / Doctor",
+      "clinicPlaceholder": "E.g.: White Fang",
+      "date": "Date",
+      "time": "Time",
+      "submit": "Schedule"
+    },
+    "weight": {
+      "title": "Add weight",
+      "step1": "Step 1: Total weight (You + Pet)",
+      "step2": "Step 2: Your weight",
+      "result": "Result",
+      "submit": "Save"
+    },
+    "shopping": {
+      "title": "Add purchase",
+      "placeholder": "What to buy? (Food, toy)",
+      "scan": "Scan receipt",
+      "submit": "Add"
+    },
+    "note": {
+      "title": "New note",
+      "placeholder": "Write something...",
+      "submit": "Save"
+    },
+    "task": {
+      "title": "New task",
+      "placeholder": "Write something...",
+      "submit": "Save"
+    },
+    "reminder": {
+      "title": "Reminder",
+      "placeholder": "Write something...",
+      "submit": "Save"
+    },
+    "photo": {
+      "description": "Take a photo or choose from gallery",
+      "open": "Open camera"
+    },
+    "fileUpload": {
+      "description": "Attach PDF or DOC file",
+      "open": "Open files"
+    }
+  }
+}

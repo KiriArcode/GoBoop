@@ -1,5 +1,14 @@
 node_modules
 .next
 out
+
+# Secrets — НИКОГДА не коммитить файлы с ключами
+.env
+.env.local
 .env*.local
+
+# MCP config (содержит Figma токен)
+.cursor/mcp.json
+
+# Logs
 *.log

@@ -1,21 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import DebugLogger from "@/components/DebugLogger";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
-const basePath = process.env.NODE_ENV === "production" ? "/GoBoop" : "";
-
 export const metadata: Metadata = {
   title: "GoBoop",
   description: "Интеллектуальная экосистема для заботы о питомце",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-  themeColor: "#121212",
-  manifest: `${basePath}/manifest.json`,
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -23,20 +16,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#121212",
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="ru">
+    <html lang={locale}>
       <head>
-        <link rel="apple-touch-icon" href={`${basePath}/icons/icon-192.svg`} />
+        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
       </head>
       <body className="antialiased">
-        <ServiceWorkerRegistrar />
-        <DebugLogger />
-        {children}
+        <NextIntlClientProvider messages={messages}>
+          <ServiceWorkerRegistrar />
+          <DebugLogger />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

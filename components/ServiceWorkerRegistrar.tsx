@@ -5,8 +5,7 @@ import { useEffect } from "react";
 const ServiceWorkerRegistrar = () => {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      const basePath =
-        process.env.NODE_ENV === "production" ? "/GoBoop" : "";
+      const basePath = "";
 
       navigator.serviceWorker
         .register(`${basePath}/sw.js`, { scope: `${basePath}/` })

@@ -1,5 +1,5 @@
 const CACHE_NAME = "goboop-v1";
-const BASE_PATH = "/GoBoop";
+const BASE_PATH = "";
 
 const PRECACHE_URLS = [
   `${BASE_PATH}/`,
