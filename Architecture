@@ -1,58 +1,47 @@
-Architecture Overview: PetOS
+Architecture Overview: GoBoop
 
 1. High-Level Concept
 
-PetOS is a Single Page Application (SPA) built on React. It simulates a mobile app experience ("App-like website"). It relies on a component-based architecture with a focus on immediate UI feedback.
+GoBoop is a Telegram Mini App (TMA) built on Next.js. It provides a mobile-first interface within Telegram and relies on a component-based architecture with a focus on immediate UI feedback. Backend: Supabase + Google Drive.
 
 2. Technical Stack
 
-Frontend Core: React 18+
+Frontend Core: Next.js 14+ (App Router)
 
-Build Tool: Vite (Fast HMR, optimized build).
+Build Tool: Next.js (Turbopack / Webpack)
 
-Language: JavaScript (ES6+) or TypeScript (Recommended for strict typing).
+Language: TypeScript
 
-Styling: Tailwind CSS (Utility-first).
+Styling: Tailwind CSS (Utility-first)
 
-Icons: Lucide React (Lightweight, consistent SVG icons).
+Icons: Lucide React (Lightweight, consistent SVG icons)
 
-Animations: CSS Transitions + Tailwind animate- classes.
+Animations: CSS Transitions + Tailwind animate- classes
 
 3. Data Flow (Architecture)
 
-MVP Phase (Current):
+Backend: Supabase (PostgreSQL) — метаданные (users, pets, tasks, events, photo links)
 
-State: Local React State (useState) lifted to specific Page components.
+File Storage: Google Drive API — фото, документы, чеки
 
-Persistence: localStorage (to save state between reloads in browser).
+Auth: Supabase Auth / Telegram Login Widget
 
-Mock Data: Hardcoded JSON objects for rapid prototyping.
+State Management: React Context API (for UserAuth and PetGlobalData), Server Components where applicable
 
-Production Phase (Target):
+4. Directory Structure (Next.js App Router)
 
-Backend: Firebase (Google).
-
-Auth: Firebase Authentication (Family accounts).
-
-DB: Cloud Firestore (Real-time updates for tasks/status).
-
-Storage: Firebase Storage (Photos of docs/receipts).
-
-State Management: React Context API (for UserAuth and PetGlobalData).
-
-4. Directory Structure
-
-/src
-  /assets        # Static images/fonts
-  /components    
-    /ui          # Atomic components (Card, Button, Input)
-    /widgets     # Complex blocks (HappinessWidget, WalkTimer)
-    /modals      # Overlays (QuickActionMenu)
-  /hooks         # useWalkTimer, useHappinessIndex
-  /pages         # Dashboard, Health, Travel, Family
-  /styles        # Global CSS / Tailwind directives
-  /utils         # Helpers (date formatting, math)
-
+/app
+  /api           # API routes (bot webhook, integrations)
+  /(routes)      # Dashboard, Health, Travel, Family pages
+  layout.tsx
+  page.tsx
+/components
+  /ui            # Atomic components (Card, Button, Input)
+  /widgets       # Complex blocks (HappinessWidget, WalkTimer)
+  /modals        # Overlays (QuickActionMenu)
+/lib             # Supabase client, Drive helpers, utilities
+/hooks           # useWalkTimer, useHappinessIndex
+/public          # Static assets
 
 5. Key Algorithms
 

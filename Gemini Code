@@ -1,3 +1,8 @@
+/**
+ * Reference UI/layout for GoBoop.
+ * Architecture: Telegram Mini App (TMA).
+ * Do not use directly — adapt for Next.js + Tailwind when implementing the TMA.
+ */
 import React, { useState, useEffect } from 'react';
 import { 
   Heart, 

@@ -1,4 +1,4 @@
-PetOS Feature List
+GoBoop Feature List
 
 Core Status
 
@@ -79,3 +79,14 @@ UI Elements:
 Button Widget: Статус с умной кнопки (Zigbee).
 
 Feeder Status: Данные с автокормушки.
+
+Telegram Bot
+
+ID: F-007
+Name: Telegram Bot — Voice/Text Commands
+Description: Парсинг голосовых и текстовых команд через AI в групповом чате.
+UI Elements:
+
+Фото в чате → загрузка в Google Drive, сохранение ссылки в Supabase, AI-теги.
+
+Текст/голос ("Купили корм") → парсинг AI → создание записи в БД (задача, заметка, вес).

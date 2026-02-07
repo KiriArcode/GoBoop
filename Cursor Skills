@@ -1,10 +1,10 @@
-Инструкция по настройке навыков (Skills) в Cursor
+Инструкция по настройке навыков (Skills) в Cursor для GoBoop
 
-Для того чтобы Cursor работал максимально эффективно с этим проектом, рекомендуется настроить его "Role" и дать ему контекст.
+GoBoop — Telegram Mini App + Telegram Bot. Формат: TMA + Bot. Backend: Supabase + Google Drive.
 
 1. System Prompt (Добавьте в настройки Cursor -> General -> Rules for AI)
 
-Используйте содержимое файла cursorrules.md. Это база.
+Используйте содержимое файла Ai Rules или .cursorrules. Это база.
 
 2. Специфичные "Навыки" (Mental Models)
 
@@ -30,4 +30,4 @@
 
 3. Работа с документацией
 
-Всегда просите AI: "Check featurelist.md ID F-00X before coding". Это активирует навык сверки с ТЗ.
+Всегда просите AI: "Check Features.md ID F-00X before coding". Это активирует навык сверки с ТЗ.

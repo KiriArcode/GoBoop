@@ -1,11 +1,17 @@
-# Project Specification: Pet Assistant Telegram Ecosystem
+# Project Specification: GoBoop — Telegram Ecosystem
 
 ## 1. Project Overview
-Мы создаем экосистему для управления уходом за домашним животным.
+
+**GoBoop** — экосистема для управления уходом за домашним животным.
+
 **Формат:** Telegram Mini App (TMA) + Telegram Chat Bot.
+
 **Цель:** Упростить рутину, трекать здоровье, задачи и сохранять воспоминания через общий чат с семьей.
 
+**Связанные документы:** [Style Guide](Style%20Guide), [Features](Features.md)
+
 ## 2. User Scenarios (User Flow)
+
 ### A. Shared Chat Context (Групповой чат)
 1.  **Фото:** Юзер отправляет фото собаки -> Бот перехватывает его.
     * **Action:** Бот загружает фото в папку на **Google Drive** пользователя.
@@ -19,6 +25,7 @@
 3.  **Settings:** Настройка интеграций.
 
 ## 3. Tech Stack & Architecture
+
 ### 3.1 Core
 * **Framework:** Next.js 14+ (App Router).
 * **Language:** TypeScript.
@@ -28,7 +35,7 @@
 * **Database:** Supabase (PostgreSQL). Только для хранения *метаданных* (таблицы пользователей, задач, ссылок на файлы). Сами файлы тут НЕ храним.
 * **File Storage:** **Google Drive API**.
     * Используем Service Account или OAuth 2.0 (Offline Access) владельца.
-    * Все фото складываются в папку `Pet_Assistant_Uploads`.
+    * Все фото складываются в папку `GoBoop_Uploads`.
 * **Hosting:** Vercel.
 
 ### 3.3 Integrations
@@ -40,6 +47,7 @@
 * **AI:** OpenAI API (GPT-4o) / Gemini API.
 
 ## 4. Database Schema (Updated for Drive)
+
 ```sql
 -- Photos Table
 create table photos (
@@ -52,3 +60,4 @@ create table photos (
 );
 
 -- (Остальные таблицы users, pets, events остаются без изменений)
+```

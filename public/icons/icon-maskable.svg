@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#121212"/>
+  <circle cx="256" cy="200" r="86" fill="#F43F5E"/>
+  <ellipse cx="224" cy="180" rx="12" ry="18" fill="#121212"/>
+  <ellipse cx="288" cy="180" rx="12" ry="18" fill="#121212"/>
+  <path d="M224 226 Q256 262 288 226" stroke="#121212" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="170" cy="138" r="34" fill="#F43F5E" opacity="0.6"/>
+  <circle cx="342" cy="138" r="34" fill="#F43F5E" opacity="0.6"/>
+  <text x="256" y="370" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="bold" font-size="60" fill="white">GoBoop</text>
+</svg>

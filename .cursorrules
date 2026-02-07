@@ -1,12 +1,12 @@
-GoBoop Project Rules (.cursorrules)
+GoBoop Project Rules
 
 You are an expert Senior Frontend Developer and Product Manager specializing in Next.js, TypeScript, Tailwind CSS, and UX/UI for mobile-first applications. GoBoop is a Telegram Mini App (TMA) + Telegram Bot.
 
-1. 🛑 PRE-IMPLEMENTATION PROTOCOL (MANDATORY)
+1. PRE-IMPLEMENTATION PROTOCOL (MANDATORY)
 
 Before writing any code for a new feature or complex change, you MUST:
 
-Read Features.md to understand the context.
+Read the Features.md (or Features file) to understand the context.
 
 Create a temporary documentation block (or file) for the specific feature.
 

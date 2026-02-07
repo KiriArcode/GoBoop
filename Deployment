@@ -1,75 +1,55 @@
-Инструкция по деплою на GitHub Pages
+Инструкция по деплою GoBoop (Telegram Mini App)
 
-Этот проект собран на Vite, поэтому деплой имеет свои особенности.
+Основной целевой хостинг для TMA: Vercel. GitHub Pages можно использовать для отдельного web-превью.
 
-1. Подготовка репозитория
+Локальная веб-версия для проверки
 
-Создайте репозиторий на GitHub.
+npm install — Установка зависимостей.
+npm run dev — Запуск dev-сервера, приложение доступно на http://localhost:3000
+npm run build && npm run start — Production-сборка и запуск локально.
 
-Инициализируйте git в папке проекта (если еще нет):
+1. Vercel (Рекомендуемый способ для TMA)
 
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin [https://github.com/ВАШ_ЮЗЕРНЕЙМ/ИМЯ_РЕПОЗИТОРИЯ.git](https://github.com/ВАШ_ЮЗЕРНЕЙМ/ИМЯ_РЕПОЗИТОРИЯ.git)
-git push -u origin main
+1.1. Подключение репозитория
 
+Создайте проект на vercel.com и подключите репозиторий GitHub.
 
-2. Настройка Vite (vite.config.js)
+1.2. Переменные окружения (Environment Variables)
 
-Откройте файл vite.config.js и добавьте base с именем вашего репозитория:
+Добавьте в настройках проекта Vercel:
 
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+| Переменная | Описание |
+|------------|----------|
+| NEXT_PUBLIC_SUPABASE_URL | Supabase project URL |
+| NEXT_PUBLIC_SUPABASE_ANON_KEY | Supabase anonymous key |
+| SUPABASE_SERVICE_ROLE_KEY | Supabase service role (для server-side) |
+| GOOGLE_CLIENT_ID | Google OAuth Client ID (для Drive) |
+| GOOGLE_CLIENT_SECRET | Google OAuth Client Secret |
+| TELEGRAM_BOT_TOKEN | Токен бота Telegram |
+| AI_API_KEY | Gemini или OpenAI API key |
 
-// [https://vitejs.dev/config/](https://vitejs.dev/config/)
-export default defineConfig({
-  plugins: [react()],
-  base: '/ИМЯ_РЕПОЗИТОРИЯ/', // <-- ВАЖНО: Добавьте это (например, /petos-app/)
-})
+1.3. Деплой
 
+При push в main ветку Vercel автоматически собирает и деплоит Next.js приложение.
 
-3. Установка gh-pages
+Важные команды:
 
-В терминале установите пакет для деплоя:
+npm install — Установка зависимостей.
+npm run dev — Запуск локального сервера.
+npm run build — Сборка проекта (проверка перед деплоем).
+npm run start — Запуск production-сборки локально.
 
-npm install gh-pages --save-dev
+2. GitHub Pages (Web-превью)
 
-
-4. Настройка package.json
-
-Добавьте следующие скрипты в раздел "scripts":
-
-"scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-  "preview": "vite preview",
-  "predeploy": "npm run build",      // <-- Добавить
-  "deploy": "gh-pages -d dist"       // <-- Добавить
-},
-
-
-5. Деплой
-
-Запустите команду:
+Статический деплой настроен. Команда:
 
 npm run deploy
 
+Проект публикуется в ветку gh-pages. URL после включения Pages:
+https://kiriarcode.github.io/GoBoop/
 
-6. Финал
+В настройках репозитория GitHub -> Settings -> Pages выберите source: Deploy from a branch, branch: gh-pages.
 
-Перейдите в настройки репозитория на GitHub -> Settings -> Pages.
+3. Webhook для Telegram Bot
 
-Убедитесь, что Source стоит gh-pages branch.
-
-Через пару минут ссылка на приложение появится сверху.
-
-Важные команды для сборки
-
-npm install - Установка зависимостей.
-
-npm run dev - Запуск локального сервера.
-
-npm run build - Сборка проекта в папку dist (проверка перед деплоем
+Для бота нужен HTTPS-эндпоинт. При деплое на Vercel создайте API route (например app/api/bot/webhook/route.ts) и зарегистрируйте его URL в BotFather как webhook.
