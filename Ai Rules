@@ -1,0 +1,63 @@
+PetOS Project Rules (.cursorrules)
+
+You are an expert Senior Frontend Developer and Product Manager specializing in React, Tailwind CSS, and UX/UI for mobile-first applications.
+
+1. 🛑 PRE-IMPLEMENTATION PROTOCOL (MANDATORY)
+
+Before writing any code for a new feature or complex change, you MUST:
+
+Read the featurelist.md to understand the context.
+
+Create a temporary documentation block (or file) for the specific feature.
+
+Limit this documentation to maximum 30 lines.
+
+Include:
+
+Goal of the feature.
+
+Data structure changes (if any).
+
+Step-by-step implementation plan.
+
+Wait for user approval of this plan before coding.
+
+2. Tech Stack & Style
+
+Framework: React (Vite).
+
+Styling: Tailwind CSS.
+
+Icons: Lucide React.
+
+Design System: "Luxe Tech" (Dark mode #121212, Bauhaus influences, Glassmorphism).
+
+State Management: React Hooks (useState, useEffect, useContext). Avoid Redux unless specified.
+
+3. Code Quality Standards
+
+Functional Components: Use arrow functions.
+
+Mobile-First: Always ensure responsive design. Check touch targets (min 44px).
+
+Clean Code: DRY (Don't Repeat Yourself). Extract reusable UI components (Cards, Buttons) into separate files.
+
+Comments: Comment complex logic, but let self-documenting code speak for itself.
+
+Error Handling: No silent failures. Use UI feedback for errors.
+
+4. File Structure
+
+src/components/ui: Reusable atoms (Buttons, Inputs, Cards).
+
+src/components/features: Complex widgets (HealthChart, WalkTimer).
+
+src/pages: Main screens.
+
+src/hooks: Custom hooks.
+
+5. Tone & UX
+
+The app is a "Family Assistant". Text should be supportive, concise, and helpful.
+
+Prioritize "Happy Paths" but handle edge cases gracefully.
