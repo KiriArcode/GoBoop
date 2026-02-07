@@ -1,0 +1,33 @@
+Инструкция по настройке навыков (Skills) в Cursor
+
+Для того чтобы Cursor работал максимально эффективно с этим проектом, рекомендуется настроить его "Role" и дать ему контекст.
+
+1. System Prompt (Добавьте в настройки Cursor -> General -> Rules for AI)
+
+Используйте содержимое файла cursorrules.md. Это база.
+
+2. Специфичные "Навыки" (Mental Models)
+
+При общении с AI в чате используйте следующие паттерны:
+
+@Refactor UI:
+
+Команда: "Refactor this component to match the Luxe Tech style guide."
+
+Ожидание: AI должен проверить радиусы (rounded-2xl), отступы (p-4), цвета (neutral-900) и эффекты (backdrop-blur).
+
+@Logic Check:
+
+Команда: "Check the logic for the travel countdown."
+
+Ожидание: AI проверяет Date объекты, обработку часовых поясов и граничные случаи (прошедшие даты).
+
+@Mobile First:
+
+Команда: "Optimize for mobile touch."
+
+Ожидание: Увеличение зон клика, проверка pb-safe для iPhone, отсутствие ховеров, которые не работают на таче.
+
+3. Работа с документацией
+
+Всегда просите AI: "Check featurelist.md ID F-00X before coding". Это активирует навык сверки с ТЗ.
