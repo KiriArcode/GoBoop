@@ -49,6 +49,7 @@ export const QuickAddMenu = ({
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
 
   // Form states
   const [tripFrom, setTripFrom] = useState("");
@@ -83,7 +84,7 @@ export const QuickAddMenu = ({
     setTextContent(""); setDateTime("");
     setAiInput(""); setAiResult("");
     setPhotoFile(null); setPhotoPreview(null); setPhotoCaption("");
-    setSaveStatus("idle"); setErrorMsg("");
+    setSaveStatus("idle"); setErrorMsg(""); setCalendarUrl(null);
   };
 
   const handleClose = () => {
@@ -111,8 +112,10 @@ export const QuickAddMenu = ({
       haptic.notification("success");
       if (onSuccess) {
         onSuccess();
+        // Don't auto-close — user needs to tap "Add to Calendar"
+      } else {
+        setTimeout(() => handleClose(), 1200);
       }
-      setTimeout(() => handleClose(), 1500);
     } catch (e) {
       setSaveStatus("error");
       haptic.notification("error");
@@ -263,10 +266,19 @@ export const QuickAddMenu = ({
                 const date = tripDate || new Date().toISOString().split("T")[0];
                 const title = `${tripFrom} → ${tripTo}`;
                 saveToApi("events", { type: "trip", title, date }, () => {
-                  const calUrl = googleCalendarUrl({ title: `✈️ ${title}`, date, description: "GoBoop — поездка с питомцем" });
-                  window.open(calUrl, "_blank");
+                  setCalendarUrl(googleCalendarUrl({ title: `✈️ ${title}`, date, description: "GoBoop — поездка с питомцем" }));
                 });
               }} color="bg-blue-500" label={tf("trip.submit")} />
+              {calendarUrl && saveStatus === "saved" && (
+                <a
+                  href={calendarUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl mt-2 flex items-center justify-center gap-2 transition-all animate-slideUp"
+                >
+                  📅 Добавить в Google Calendar
+                </a>
+              )}
               <ErrorMessage />
             </div>
           </div>
@@ -298,10 +310,19 @@ export const QuickAddMenu = ({
                 const time = vetTime || null;
                 const title = vetClinic || "Визит к врачу";
                 saveToApi("events", { type: "vet", title, date, time, location: vetClinic }, () => {
-                  const calUrl = googleCalendarUrl({ title: `🏥 ${title}`, date, time, location: vetClinic, description: "GoBoop — визит к ветеринару" });
-                  window.open(calUrl, "_blank");
+                  setCalendarUrl(googleCalendarUrl({ title: `🏥 ${title}`, date, time, location: vetClinic, description: "GoBoop — визит к ветеринару" }));
                 });
               }} color="bg-rose-500" label={tf("vet.submit")} />
+              {calendarUrl && saveStatus === "saved" && (
+                <a
+                  href={calendarUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-xl mt-2 flex items-center justify-center gap-2 transition-all animate-slideUp"
+                >
+                  📅 Добавить в Google Calendar
+                </a>
+              )}
               <ErrorMessage />
             </div>
           </div>
