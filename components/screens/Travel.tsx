@@ -21,6 +21,7 @@ const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
 
 interface TripEvent {
   id: string;
+  type: string;
   title: string;
   date: string;
   time: string | null;
@@ -69,7 +70,7 @@ export const Travel = () => {
       const res = await fetch(`/api/events?pet_id=${PET_ID}`);
       if (res.ok) {
         const data: TripEvent[] = await res.json();
-        setTrips(data.filter((e: { type?: string }) => (e as { type: string }).type === "trip"));
+        setTrips(data.filter(e => e.type === "trip"));
       }
     } catch {
       // silent
