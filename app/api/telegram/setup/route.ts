@@ -26,10 +26,8 @@ export async function GET(request: NextRequest) {
 
   const action = request.nextUrl.searchParams.get("action") || "info";
 
-  // Build the webhook URL
-  const host = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_APP_URL || "https://go-boop.vercel.app";
+  // Build the webhook URL — always use production domain, not deployment-specific VERCEL_URL
+  const host = process.env.NEXT_PUBLIC_APP_URL || "https://go-boop.vercel.app";
 
   const webhookUrl = `${host}/api/telegram/webhook?token=${BOT_TOKEN}`;
 
