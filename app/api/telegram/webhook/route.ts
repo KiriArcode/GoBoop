@@ -29,28 +29,43 @@ interface TelegramUpdate {
 
 const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40"; // Demo pet, will be dynamic later
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// Lazy getter — always reads env at runtime
+function getBotToken(): string {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) throw new Error("TELEGRAM_BOT_TOKEN not set");
+  return token;
+}
 
 async function sendMessage(chatId: number, text: string, replyToMessageId?: number) {
-  if (!BOT_TOKEN) return;
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      reply_to_message_id: replyToMessageId,
-      parse_mode: "HTML",
-    }),
-  });
+  try {
+    const token = getBotToken();
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        reply_to_message_id: replyToMessageId,
+        parse_mode: "HTML",
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[sendMessage] Telegram API error:", res.status, err);
+    }
+  } catch (e) {
+    console.error("[sendMessage] Error:", e);
+  }
 }
 
 async function parseWithAI(text: string): Promise<{ type: string; confidence: number; data: Record<string, unknown> } | null> {
   try {
-    // Use the same AI parse endpoint internally
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey) {
+      console.error("[parseWithAI] GEMINI_API_KEY not set");
+      return null;
+    }
 
     const MODELS = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -77,15 +92,17 @@ If in doubt use "note". NEVER return "unknown". Return ONLY valid JSON.`;
         });
         const response = result.response.text();
         const cleaned = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        console.log(`[parseWithAI] Model ${modelName} OK:`, cleaned);
         return JSON.parse(cleaned);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "";
+        console.error(`[parseWithAI] Model ${modelName} failed:`, msg);
         if (msg.includes("429") || msg.includes("quota")) continue;
         break;
       }
     }
-  } catch {
-    // AI unavailable
+  } catch (e) {
+    console.error("[parseWithAI] Error:", e);
   }
   return null;
 }
@@ -163,12 +180,23 @@ async function handleStart(chatId: number) {
 export async function POST(request: NextRequest) {
   try {
     // Verify bot token in URL for basic security
-    const token = request.nextUrl.searchParams.get("token");
-    if (token !== BOT_TOKEN) {
+    const urlToken = request.nextUrl.searchParams.get("token");
+    let botToken: string;
+    try {
+      botToken = getBotToken();
+    } catch {
+      console.error("[webhook] TELEGRAM_BOT_TOKEN not available");
+      return NextResponse.json({ ok: true }); // Don't expose error to Telegram
+    }
+
+    if (urlToken !== botToken) {
+      console.error("[webhook] Token mismatch. URL token length:", urlToken?.length, "Env token length:", botToken.length);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const update: TelegramUpdate = await request.json();
+    console.log("[webhook] Received update:", update.update_id, "chat:", update.message?.chat.id, "text:", update.message?.text?.substring(0, 50));
+
     const message = update.message;
 
     if (!message || !message.text) {
@@ -185,6 +213,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // In group chats, only respond to messages that mention the bot or reply to it
+    if (message.chat.type === "group" || message.chat.type === "supergroup") {
+      const botMentioned = text.includes("@") || text.toLowerCase().includes("goboop");
+      if (!botMentioned) {
+        return NextResponse.json({ ok: true }); // Ignore non-mentioned messages in groups
+      }
+    }
+
     // Ignore other slash commands
     if (text.startsWith("/")) {
       return NextResponse.json({ ok: true });
@@ -197,6 +233,7 @@ export async function POST(request: NextRequest) {
       const result = await saveToSupabase(parsed.type, parsed.data, userName);
 
       if (result.error) {
+        console.error("[webhook] Supabase save error:", result.error);
         await sendMessage(
           chatId,
           `❌ Ошибка сохранения: ${result.error.message}`,
@@ -218,11 +255,15 @@ export async function POST(request: NextRequest) {
     } else {
       // AI unavailable — save as note
       const supabase = getSupabaseAdmin();
-      await supabase.from("notes").insert({
+      const { error } = await supabase.from("notes").insert({
         pet_id: PET_ID,
         content: text,
         created_by: userName,
       });
+
+      if (error) {
+        console.error("[webhook] Note save error:", error);
+      }
 
       await sendMessage(
         chatId,
@@ -238,7 +279,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET — health check
+// GET — health check + diagnostics
 export async function GET() {
-  return NextResponse.json({ status: "ok", bot: "GoBoop" });
+  const hasToken = !!process.env.TELEGRAM_BOT_TOKEN;
+  const hasGemini = !!process.env.GEMINI_API_KEY;
+  const hasSupabase = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return NextResponse.json({
+    status: "ok",
+    bot: "GoBoop",
+    env: { hasToken, hasGemini, hasSupabase },
+  });
 }
