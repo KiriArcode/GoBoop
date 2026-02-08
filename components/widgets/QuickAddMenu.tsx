@@ -96,14 +96,16 @@ export const QuickAddMenu = ({
         body: JSON.stringify({ pet_id: PET_ID, created_by: USER_ID, ...body }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Save failed");
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `Ошибка сохранения (${res.status})`);
       }
       setSaveStatus("saved");
       setTimeout(() => handleClose(), 1200);
     } catch (e) {
       setSaveStatus("error");
-      setErrorMsg(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Неизвестная ошибка";
+      setErrorMsg(msg);
+      console.error(`[saveToApi] ${endpoint}:`, msg);
     }
   };
 
@@ -117,6 +119,14 @@ export const QuickAddMenu = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: aiInput }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        const detail = errData?.error || `Сервер вернул ошибку ${res.status}`;
+        setAiResult(`Ошибка: ${detail}`);
+        return;
+      }
+
       const data = await res.json();
       if (data.type && data.type !== "unknown") {
         setAiResult(`✓ ${data.type}: ${JSON.stringify(data.data)}`);
@@ -138,8 +148,9 @@ export const QuickAddMenu = ({
       } else {
         setAiResult("Не удалось распознать команду. Попробуйте другую формулировку.");
       }
-    } catch {
-      setAiResult("Ошибка AI. Попробуйте позже.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Неизвестная ошибка";
+      setAiResult(`Ошибка AI: ${msg}`);
     } finally {
       setAiLoading(false);
     }

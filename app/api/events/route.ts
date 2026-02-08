@@ -1,36 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
+function checkEnv() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Supabase environment variables not configured" },
+      { status: 500 }
+    );
+  }
+  return null;
+}
+
 // GET /api/events?pet_id=xxx
 export async function GET(request: NextRequest) {
-  const supabase = getSupabaseAdmin();
-  const petId = request.nextUrl.searchParams.get("pet_id");
+  const envErr = checkEnv();
+  if (envErr) return envErr;
 
-  let query = supabase.from("events").select("*").order("date", { ascending: true });
+  try {
+    const supabase = getSupabaseAdmin();
+    const petId = request.nextUrl.searchParams.get("pet_id");
 
-  if (petId) {
-    query = query.eq("pet_id", petId);
+    let query = supabase.from("events").select("*").order("date", { ascending: true });
+
+    if (petId) {
+      query = query.eq("pet_id", petId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[API events GET]", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    console.error("[API events GET] unexpected:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }
 
 // POST /api/events
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  const envErr = checkEnv();
+  if (envErr) return envErr;
 
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.from("events").insert(body).select().single();
+  try {
+    const body = await request.json();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.from("events").insert(body).select().single();
+
+    if (error) {
+      console.error("[API events POST]", error.message, error.details);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    console.error("[API events POST] unexpected:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  return NextResponse.json(data, { status: 201 });
 }

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 const SYSTEM_PROMPT = `You are GoBoop AI assistant for a pet care app. 
 Parse the user's text command and return a JSON object with:
-- "type": one of "vet", "trip", "weight", "shopping", "note", "task", "reminder", "unknown"
+- "type": one of "vet", "trip", "weight", "shopping", "note", "task", "reminder"
 - "confidence": number 0-1 how confident you are
 - "data": extracted structured data as key-value pairs
 
@@ -16,11 +14,22 @@ Examples:
 - "Купить новый поводок" → {"type":"shopping","confidence":0.85,"data":{"title":"Новый поводок"}}
 - "Дать таблетку от глистов" → {"type":"task","confidence":0.9,"data":{"title":"Дать таблетку от глистов"}}
 - "Напомни завтра в 10:00 про прививку" → {"type":"reminder","confidence":0.9,"data":{"content":"Прививка","remind_at":"tomorrow 10:00"}}
+- "Гуляли 30 минут в парке" → {"type":"note","confidence":0.8,"data":{"content":"Гуляли 30 минут в парке"}}
 
-Return ONLY valid JSON, no markdown, no explanations.`;
+If in doubt, use "note" as the type and put the full text in data.content.
+NEVER return "unknown" as type — always pick the best matching type.
+Return ONLY valid JSON, no markdown, no explanations, no code fences.`;
 
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY not configured", type: "note", confidence: 0, data: {} },
+        { status: 500 }
+      );
+    }
+
     const { text } = await request.json();
 
     if (!text || typeof text !== "string") {
@@ -30,12 +39,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const result = await model.generateContent([
-      { text: SYSTEM_PROMPT },
-      { text: `Parse this command: "${text}"` },
-    ]);
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: SYSTEM_PROMPT },
+            { text: `Parse this command: "${text}"` },
+          ],
+        },
+      ],
+    });
 
     const response = result.response.text();
 
@@ -49,9 +66,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error("[AI Parse Error]", error);
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error("[AI Parse Error]", errMsg);
     return NextResponse.json(
-      { error: "Failed to parse command", type: "unknown", confidence: 0, data: {} },
+      { error: errMsg, type: "note", confidence: 0, data: {} },
       { status: 500 }
     );
   }

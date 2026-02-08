@@ -106,3 +106,10 @@ create table if not exists photos (
   created_by text not null,
   created_at timestamptz default now()
 );
+
+-- ============================================
+-- Demo data for testing
+-- ============================================
+INSERT INTO pets (id, name, breed, owner_id)
+VALUES ('003ab934-9f93-4f2b-aade-10a6fbc8ca40', 'Demo Pet', 'Mixed', 'demo-user')
+ON CONFLICT (id) DO NOTHING;
