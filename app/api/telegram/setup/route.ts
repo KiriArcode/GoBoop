@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * GET /api/telegram/setup?action=set — register webhook
- * GET /api/telegram/setup?action=info — get current webhook info
- * GET /api/telegram/setup?action=delete — remove webhook
+ * GET /api/telegram/setup?action=set&secret=goboop — register webhook
+ * GET /api/telegram/setup?action=info&secret=goboop — get current webhook info
+ * GET /api/telegram/setup?action=delete&secret=goboop — remove webhook
  *
- * Protected by a simple secret (TELEGRAM_WEBHOOK_SECRET env var)
+ * Protected by a simple password "goboop" (or TELEGRAM_WEBHOOK_SECRET env var)
  */
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get("secret");
-  const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_BOT_TOKEN;
+  const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "goboop";
 
   if (!secret || secret !== WEBHOOK_SECRET) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({
+      error: "Forbidden",
+      hint: "Add ?secret=goboop to URL",
+      bot_token_set: !!process.env.TELEGRAM_BOT_TOKEN,
+    }, { status: 403 });
   }
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   if (!BOT_TOKEN) {
-    return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN not set" }, { status: 500 });
+    return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN not set in Vercel Environment Variables" }, { status: 500 });
   }
 
   const action = request.nextUrl.searchParams.get("action") || "info";
