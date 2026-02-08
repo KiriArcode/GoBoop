@@ -20,6 +20,49 @@ If in doubt, use "note" as the type and put the full text in data.content.
 NEVER return "unknown" as type — always pick the best matching type.
 Return ONLY valid JSON, no markdown, no explanations, no code fences.`;
 
+// Models to try in order of preference (each has separate free-tier quota)
+const MODELS = [
+  "gemini-2.0-flash-lite",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+];
+
+async function tryGenerate(genAI: GoogleGenerativeAI, text: string): Promise<string> {
+  let lastError: Error | null = null;
+
+  for (const modelName of MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: SYSTEM_PROMPT },
+              { text: `Parse this command: "${text}"` },
+            ],
+          },
+        ],
+      });
+      return result.response.text();
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const msg = lastError.message;
+
+      // If it's a quota/rate limit error, try next model
+      if (msg.includes("429") || msg.includes("quota") || msg.includes("rate")) {
+        console.warn(`[AI] ${modelName} quota exceeded, trying next model...`);
+        continue;
+      }
+
+      // For other errors, throw immediately
+      throw lastError;
+    }
+  }
+
+  throw lastError || new Error("All AI models exhausted");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -40,21 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: SYSTEM_PROMPT },
-            { text: `Parse this command: "${text}"` },
-          ],
-        },
-      ],
-    });
-
-    const response = result.response.text();
+    const response = await tryGenerate(genAI, text);
 
     // Clean up response — remove markdown code blocks if present
     const cleaned = response
@@ -68,6 +97,20 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     console.error("[AI Parse Error]", errMsg);
+
+    // User-friendly message for quota errors
+    if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("rate")) {
+      return NextResponse.json(
+        {
+          error: "AI временно недоступен (лимит запросов). Подождите минуту и попробуйте снова.",
+          type: "note",
+          confidence: 0,
+          data: {},
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: errMsg, type: "note", confidence: 0, data: {} },
       { status: 500 }
