@@ -10,6 +10,7 @@
 |-------------|--------|
 | Header: Имя, статус (дома/гуляет), Индекс Счастья (виджет) | UI ✓ / Data — / Backend — |
 | Walk Block: Статус прогулки, таймер "прошло времени", кнопка действия | UI ✓ / Data — / Backend — |
+| **Smart Notifications**: «Что нужно сегодня» (визит, лекарства, задачи, документы) | UI ✓ / Data ✓ / Backend ✓ |
 | Upcoming Events: Мини-карточки (Врач, Поездка) | UI ✓ / Data ✓ / Backend ✓ |
 | Family Leaderboard: Мини-виджет лидера недели | UI ✓ / Data — / Backend — |
 

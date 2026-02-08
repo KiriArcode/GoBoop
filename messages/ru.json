@@ -39,7 +39,13 @@
     "shoppingTitle": "Покупки",
     "notesTitle": "Заметки",
     "noNotes": "Пока нет заметок",
-    "addNoteHint": "Напишите боту или нажмите \"+\" → Заметка"
+    "addNoteHint": "Напишите боту или нажмите \"+\" → Заметка",
+    "todayTitle": "Что нужно сегодня",
+    "todayEmpty": "Всё готово на сегодня",
+    "medicationToday": "Принять {name}",
+    "vetToday": "Визит к врачу",
+    "taskToday": "Задача: {title}",
+    "docDeadline": "{name} — дедлайн сегодня"
   },
   "health": {
     "title": "Здоровье",

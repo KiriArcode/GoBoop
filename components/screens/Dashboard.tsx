@@ -8,6 +8,7 @@ import {
   Plane,
   MapPin,
   CheckCircle,
+  CheckSquare,
   Clock,
   ChevronRight,
   Trophy,
@@ -19,6 +20,8 @@ import {
   Image as ImageIcon,
   Trash2,
   ShoppingCart,
+  Pill,
+  AlertCircle,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 
@@ -57,6 +60,50 @@ interface PhotoItem {
   created_at: string;
 }
 
+interface TaskItem {
+  id: string;
+  title: string;
+  status: string;
+  assigned_to: string | null;
+  due_date: string | null;
+}
+
+interface TreatmentCaseItem {
+  id: string;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  status: string;
+}
+
+interface MedicationItem {
+  id: string;
+  name: string;
+  dosage: string | null;
+  frequency: string;
+  start_date: string;
+  end_date: string | null;
+}
+
+interface TripDocItem {
+  id: string;
+  name: string;
+  status: string;
+  deadline: string | null;
+}
+
+type TodayItemType = "vet" | "medication" | "task" | "doc";
+type TodayPriority = "urgent" | "today" | "optional";
+
+interface TodayItem {
+  id: string;
+  type: TodayItemType;
+  priority: TodayPriority;
+  label: string;
+  sublabel?: string;
+  navigateTo: "health" | "family" | "travel";
+}
+
 interface DashboardProps {
   happiness: number;
   timeSinceWalk: string;
@@ -77,6 +124,10 @@ export const Dashboard = ({
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [treatmentCases, setTreatmentCases] = useState<TreatmentCaseItem[]>([]);
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [tripDocuments, setTripDocuments] = useState<TripDocItem[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [uploading, setUploading] = useState(false);
 
@@ -131,6 +182,54 @@ export const Dashboard = ({
     }
   }, []);
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/tasks?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const fetchTreatmentCases = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/treatment-cases?pet_id=${PET_ID}&status=active`);
+      if (res.ok) {
+        const data = await res.json();
+        setTreatmentCases(data);
+        if (data[0]) {
+          const medRes = await fetch(`/api/medications?treatment_case_id=${data[0].id}`);
+          if (medRes.ok) {
+            const meds = await medRes.json();
+            setMedications(meds);
+          }
+        } else {
+          setMedications([]);
+        }
+      }
+    } catch {
+      setTreatmentCases([]);
+      setMedications([]);
+    }
+  }, []);
+
+  const fetchTripDocuments = useCallback(async (eventId: string) => {
+    try {
+      const res = await fetch(`/api/trip-documents?event_id=${eventId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTripDocuments(data);
+      } else {
+        setTripDocuments([]);
+      }
+    } catch {
+      setTripDocuments([]);
+    }
+  }, []);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -182,10 +281,95 @@ export const Dashboard = ({
     fetchNotes();
     fetchShopping();
     fetchPhotos();
-  }, [fetchEvents, fetchNotes, fetchShopping, fetchPhotos]);
+    fetchTasks();
+    fetchTreatmentCases();
+  }, [fetchEvents, fetchNotes, fetchShopping, fetchPhotos, fetchTasks, fetchTreatmentCases]);
 
-  const upcomingVet = events.find(e => e.type === "vet");
-  const upcomingTrip = events.find(e => e.type === "trip");
+  const upcomingVet = events.find((e) => e.type === "vet");
+  const upcomingTrip = events.find((e) => e.type === "trip");
+
+  useEffect(() => {
+    if (upcomingTrip) {
+      fetchTripDocuments(upcomingTrip.id);
+    } else {
+      setTripDocuments([]);
+    }
+  }, [upcomingTrip?.id, fetchTripDocuments]);
+
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  const buildTodayItems = (): TodayItem[] => {
+    const items: TodayItem[] = [];
+
+    const vetToday = events.find((e) => e.type === "vet" && e.date === today);
+    if (vetToday) {
+      items.push({
+        id: `vet-${vetToday.id}`,
+        type: "vet",
+        priority: "urgent",
+        label: t("vetToday"),
+        sublabel: vetToday.time ? `${vetToday.time}` : vetToday.title,
+        navigateTo: "health",
+      });
+    }
+
+    const activeMeds = medications.filter((m) => {
+      const startOk = m.start_date <= today;
+      const endOk = !m.end_date || m.end_date >= today;
+      return startOk && endOk;
+    });
+    activeMeds.forEach((m) => {
+      items.push({
+        id: `med-${m.id}`,
+        type: "medication",
+        priority: "today",
+        label: t("medicationToday", { name: m.name }),
+        sublabel: m.dosage || m.frequency,
+        navigateTo: "health",
+      });
+    });
+
+    const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "overdue");
+    pendingTasks.forEach((task) => {
+      const dueToday = task.due_date === today;
+      const overdue = task.due_date && task.due_date < today;
+      const dueTomorrow = task.due_date === tomorrow;
+      const priority: TodayPriority = overdue || dueToday ? "urgent" : dueTomorrow ? "optional" : "today";
+      items.push({
+        id: `task-${task.id}`,
+        type: "task",
+        priority,
+        label: t("taskToday", { title: task.title }),
+        sublabel: task.due_date ? new Date(task.due_date).toLocaleDateString("ru-RU") : undefined,
+        navigateTo: "family",
+      });
+    });
+
+    const urgentDocs = tripDocuments.filter((d) => {
+      if (d.status === "done" || d.status === "na") return false;
+      if (!d.deadline) return d.status === "urgent";
+      return d.deadline <= today || d.deadline === tomorrow;
+    });
+    urgentDocs.forEach((d) => {
+      const deadlineToday = d.deadline === today;
+      const priority: TodayPriority = deadlineToday ? "urgent" : d.deadline === tomorrow ? "optional" : "today";
+      items.push({
+        id: `doc-${d.id}`,
+        type: "doc",
+        priority,
+        label: t("docDeadline", { name: d.name }),
+        sublabel: d.deadline ? new Date(d.deadline).toLocaleDateString("ru-RU") : undefined,
+        navigateTo: "travel",
+      });
+    });
+
+    const priorityOrder = { urgent: 0, today: 1, optional: 2 };
+    return items.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  };
+
+  const todayItems = buildTodayItems();
 
   return (
     <div className="space-y-4 animate-fadeIn pb-24">
@@ -297,6 +481,64 @@ export const Dashboard = ({
           </div>
         </div>
       </Card>
+
+      {/* What to do today */}
+      <SectionHeader title={t("todayTitle")} />
+      {todayItems.length > 0 ? (
+        <div className="space-y-2">
+          {todayItems.map((item) => {
+            const borderColor =
+              item.priority === "urgent"
+                ? "border-l-rose-500"
+                : item.priority === "today"
+                  ? "border-l-amber-500"
+                  : "border-l-neutral-600";
+            const Icon =
+              item.type === "vet"
+                ? Activity
+                : item.type === "medication"
+                  ? Pill
+                  : item.type === "task"
+                    ? CheckSquare
+                    : AlertCircle;
+            const iconBg =
+              item.priority === "urgent"
+                ? "bg-rose-500/10"
+                : item.priority === "today"
+                  ? "bg-amber-500/10"
+                  : "bg-neutral-700/50";
+            const iconColor =
+              item.priority === "urgent"
+                ? "text-rose-500"
+                : item.priority === "today"
+                  ? "text-amber-500"
+                  : "text-neutral-500";
+            return (
+              <Card
+                key={item.id}
+                onClick={() => navigateTo(item.navigateTo)}
+                className={`border-l-4 ${borderColor} cursor-pointer min-h-[44px] active:scale-[0.98] transition-transform flex items-center gap-3`}
+              >
+                <div className={`p-2 rounded-lg ${iconBg}`}>
+                  <Icon className={`w-4 h-4 ${iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{item.label}</p>
+                  {item.sublabel && (
+                    <p className="text-neutral-500 text-xs truncate">{item.sublabel}</p>
+                  )}
+                </div>
+                <ChevronRight className="w-4 h-4 text-neutral-600 shrink-0" />
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="text-center py-6 border border-dashed border-neutral-700">
+          <CheckCircle className="w-8 h-8 text-emerald-500/50 mx-auto mb-2" />
+          <p className="text-neutral-500 text-sm">{t("todayEmpty")}</p>
+        </Card>
+      )}
 
       {/* Photo Gallery */}
       <SectionHeader

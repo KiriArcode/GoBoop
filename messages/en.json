@@ -39,7 +39,13 @@
     "shoppingTitle": "Shopping",
     "notesTitle": "Notes",
     "noNotes": "No notes yet",
-    "addNoteHint": "Write to the bot or tap \"+\" → Note"
+    "addNoteHint": "Write to the bot or tap \"+\" → Note",
+    "todayTitle": "What to do today",
+    "todayEmpty": "All done for today",
+    "medicationToday": "Take {name}",
+    "vetToday": "Vet visit",
+    "taskToday": "Task: {title}",
+    "docDeadline": "{name} — deadline today"
   },
   "health": {
     "title": "Health",
