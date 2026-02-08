@@ -7,6 +7,7 @@ import { Activity, Plane, Plus, Users, Home } from "lucide-react";
 import { NavButton } from "@/components/ui";
 import { Dashboard, Health, Travel, Family } from "@/components/screens";
 import { QuickAddMenu } from "@/components/widgets/QuickAddMenu";
+import { useTelegramContext } from "@/components/TelegramProvider";
 
 // Debug log — only active on localhost
 const isDev =
@@ -18,10 +19,11 @@ const log = (msg: string, data?: object) => {
 
 export default function GoBoopApp() {
   const t = useTranslations("nav");
+  const { isTMA, haptic, safeArea, contentSafeArea, user } = useTelegramContext();
 
   useEffect(() => {
-    log("GoBoopApp mounted");
-  }, []);
+    log("GoBoopApp mounted", { isTMA, user: user?.first_name ?? "browser" });
+  }, [isTMA, user]);
 
   const [activeTab, setActiveTab] = useLocalStorage(
     "goboop_activeTab",
@@ -82,6 +84,10 @@ export default function GoBoopApp() {
     }
   }, [showQuickAdd]);
 
+  // Compute safe area padding for Telegram
+  const topPad = isTMA ? safeArea.top + contentSafeArea.top : 0;
+  const bottomPad = isTMA ? safeArea.bottom : 0;
+
   return (
     <div className="min-h-screen bg-[#121212] text-neutral-200 font-sans selection:bg-rose-500/30">
       <QuickAddMenu
@@ -92,13 +98,17 @@ export default function GoBoopApp() {
       />
 
       <div className="max-w-md mx-auto min-h-screen relative flex flex-col">
-        <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
+        <div
+          className="flex-1 p-5 overflow-y-auto custom-scrollbar"
+          style={{ paddingTop: topPad > 0 ? `${topPad + 20}px` : undefined }}
+        >
           {activeTab === "dashboard" && (
             <Dashboard
               happiness={happiness}
               timeSinceWalk={timeSinceWalk}
               onWalkDone={handleWalkDone}
               navigateTo={navigateTo}
+              userName={user?.first_name}
             />
           )}
           {activeTab === "health" && <Health />}
@@ -107,7 +117,10 @@ export default function GoBoopApp() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#121212]/90 backdrop-blur-xl border-t border-white/5 pb-safe z-50">
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-[#121212]/90 backdrop-blur-xl border-t border-white/5 z-50"
+          style={{ paddingBottom: bottomPad > 0 ? `${bottomPad}px` : undefined }}
+        >
           <div className="max-w-md mx-auto flex justify-around items-center p-2">
             <NavButton
               icon={Home}
@@ -123,7 +136,10 @@ export default function GoBoopApp() {
             />
             <div className="relative -top-6">
               <button
-                onClick={() => setShowQuickAdd(true)}
+                onClick={() => {
+                  haptic.impact("heavy");
+                  setShowQuickAdd(true);
+                }}
                 className={`w-14 h-14 bg-white text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.3)] transform transition-all duration-300 hover:scale-105 active:scale-95 ${showQuickAdd ? "rotate-45" : ""}`}
               >
                 <Plus className="w-6 h-6" />

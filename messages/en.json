@@ -6,6 +6,7 @@
     "family": "Family"
   },
   "dashboard": {
+    "greeting": "Hi, {name}!",
     "petStatus": "At home, resting",
     "happinessIndex": "Happiness Index",
     "walks": {

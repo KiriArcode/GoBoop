@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import DebugLogger from "@/components/DebugLogger";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { TelegramProvider } from "@/components/TelegramProvider";
 
 export const metadata: Metadata = {
   title: "GoBoop",
@@ -36,12 +38,19 @@ export default async function RootLayout({
     <html lang={locale}>
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        {/* Telegram Mini App SDK — must load before React hydrates */}
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
       </head>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          <ServiceWorkerRegistrar />
-          <DebugLogger />
-          {children}
+          <TelegramProvider>
+            <ServiceWorkerRegistrar />
+            <DebugLogger />
+            {children}
+          </TelegramProvider>
         </NextIntlClientProvider>
       </body>
     </html>

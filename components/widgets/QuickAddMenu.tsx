@@ -22,6 +22,7 @@ import {
   Check,
 } from "lucide-react";
 import { QuickActionBtn } from "@/components/ui";
+import { useTelegramContext } from "@/components/TelegramProvider";
 
 const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
 const USER_ID = "demo-user";
@@ -43,6 +44,7 @@ export const QuickAddMenu = ({
 }: QuickAddMenuProps) => {
   const t = useTranslations("quickAdd");
   const tf = useTranslations("forms");
+  const { haptic } = useTelegramContext();
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -100,9 +102,11 @@ export const QuickAddMenu = ({
         throw new Error(err.error || `Ошибка сохранения (${res.status})`);
       }
       setSaveStatus("saved");
+      haptic.notification("success");
       setTimeout(() => handleClose(), 1200);
     } catch (e) {
       setSaveStatus("error");
+      haptic.notification("error");
       const msg = e instanceof Error ? e.message : "Неизвестная ошибка";
       setErrorMsg(msg);
       console.error(`[saveToApi] ${endpoint}:`, msg);
@@ -111,6 +115,7 @@ export const QuickAddMenu = ({
 
   const handleAiParse = async () => {
     if (!aiInput.trim()) return;
+    haptic.impact("medium");
     setAiLoading(true);
     setAiResult("");
     try {

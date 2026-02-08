@@ -21,6 +21,7 @@ interface DashboardProps {
   timeSinceWalk: string;
   onWalkDone: (e: React.MouseEvent) => void;
   navigateTo: (tab: string) => void;
+  userName?: string | null;
 }
 
 export const Dashboard = ({
@@ -28,6 +29,7 @@ export const Dashboard = ({
   timeSinceWalk,
   onWalkDone,
   navigateTo,
+  userName,
 }: DashboardProps) => {
   const t = useTranslations("dashboard");
 
@@ -37,6 +39,11 @@ export const Dashboard = ({
       <div className="relative pt-2 mb-4">
         <div className="flex justify-between items-start mb-4">
           <div>
+            {userName && (
+              <p className="text-neutral-500 text-xs mb-1">
+                {t("greeting", { name: userName })}
+              </p>
+            )}
             <h1 className="text-3xl font-bold text-white tracking-tight">
               Арчи
             </h1>
