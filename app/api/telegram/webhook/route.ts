@@ -255,21 +255,27 @@ export async function POST(request: NextRequest) {
     } else {
       // AI unavailable — save as note
       const supabase = getSupabaseAdmin();
-      const { error } = await supabase.from("notes").insert({
+      const { data: noteData, error } = await supabase.from("notes").insert({
         pet_id: PET_ID,
         content: text,
         created_by: userName,
-      });
+      }).select().single();
 
       if (error) {
-        console.error("[webhook] Note save error:", error);
+        console.error("[webhook] Note save error:", error.message, error.details, error.hint);
+        await sendMessage(
+          chatId,
+          `❌ Не удалось сохранить заметку: ${error.message}`,
+          message.message_id
+        );
+      } else {
+        console.log("[webhook] Note saved:", noteData?.id);
+        await sendMessage(
+          chatId,
+          `📝 Сохранено как заметка (AI временно недоступен)`,
+          message.message_id
+        );
       }
-
-      await sendMessage(
-        chatId,
-        `📝 Сохранено как заметка (AI временно недоступен)`,
-        message.message_id
-      );
     }
 
     return NextResponse.json({ ok: true });
