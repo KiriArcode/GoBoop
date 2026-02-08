@@ -155,6 +155,23 @@ function getTypeLabel(type: string): string {
   return map[type] || "Запись";
 }
 
+// Register chat for daily digest
+async function registerChat(message: TelegramMessage) {
+  try {
+    const supabase = getSupabaseAdmin();
+    await supabase.from("bot_chats").upsert({
+      chat_id: message.chat.id,
+      chat_type: message.chat.type,
+      title: message.chat.title || null,
+      user_name: message.from?.first_name || null,
+      pet_id: PET_ID,
+      is_active: true,
+    }, { onConflict: "chat_id" });
+  } catch (e) {
+    console.error("[registerChat]", e);
+  }
+}
+
 // Handle /start command
 async function handleStart(chatId: number) {
   const text = `🐾 <b>GoBoop Bot</b>
@@ -164,6 +181,7 @@ async function handleStart(chatId: number) {
 <b>Что я умею:</b>
 • Записывать данные из текстовых сообщений
 • Понимать команды вроде "Купили корм 2кг" или "Вес 12.5 кг"
+• Ежедневная сводка в 20:00 🕗
 
 <b>Просто напишите в чат:</b>
 "Купили корм Royal Canin"
@@ -206,6 +224,9 @@ export async function POST(request: NextRequest) {
     const chatId = message.chat.id;
     const text = message.text.trim();
     const userName = message.from?.first_name || "User";
+
+    // Register this chat for daily digest (non-blocking)
+    registerChat(message);
 
     // Handle /start command
     if (text === "/start") {

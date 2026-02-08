@@ -95,15 +95,27 @@ create table if not exists feedback (
   created_at timestamptz default now()
 );
 
--- Photos (Google Drive links)
+-- Photos (Supabase Storage)
 create table if not exists photos (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid references pets(id) on delete cascade,
-  drive_file_id text unique,
-  web_view_link text,
-  thumbnail_link text,
+  storage_path text not null,
+  url text not null,
+  thumbnail_url text,
+  caption text,
   tags text[],
   created_by text not null,
+  created_at timestamptz default now()
+);
+
+-- Bot chats (for daily digest)
+create table if not exists bot_chats (
+  chat_id bigint primary key,
+  chat_type text not null default 'private',
+  title text,
+  user_name text,
+  pet_id uuid references pets(id) on delete set null,
+  is_active boolean default true,
   created_at timestamptz default now()
 );
 

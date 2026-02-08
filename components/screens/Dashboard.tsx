@@ -15,6 +15,8 @@ import {
   Calendar,
   FileText,
   RefreshCw,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 
@@ -45,6 +47,14 @@ interface ShoppingItem {
   created_at: string;
 }
 
+interface PhotoItem {
+  id: string;
+  url: string;
+  caption: string | null;
+  created_by: string;
+  created_at: string;
+}
+
 interface DashboardProps {
   happiness: number;
   timeSinceWalk: string;
@@ -64,7 +74,9 @@ export const Dashboard = ({
   const [events, setEvents] = useState<EventItem[]>([]);
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -105,11 +117,44 @@ export const Dashboard = ({
     }
   }, []);
 
+  const fetchPhotos = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/photos?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPhotos(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("pet_id", PET_ID);
+      formData.append("created_by", userName || "User");
+      const res = await fetch("/api/photos", { method: "POST", body: formData });
+      if (res.ok) {
+        fetchPhotos();
+      }
+    } catch {
+      // silent
+    } finally {
+      setUploading(false);
+    }
+  };
+
   useEffect(() => {
     fetchEvents();
     fetchNotes();
     fetchShopping();
-  }, [fetchEvents, fetchNotes, fetchShopping]);
+    fetchPhotos();
+  }, [fetchEvents, fetchNotes, fetchShopping, fetchPhotos]);
 
   const upcomingVet = events.find(e => e.type === "vet");
   const upcomingTrip = events.find(e => e.type === "trip");
@@ -224,6 +269,58 @@ export const Dashboard = ({
           </div>
         </div>
       </Card>
+
+      {/* Photo Gallery */}
+      <SectionHeader
+        title={t("photosTitle")}
+        action={
+          <label className="cursor-pointer text-neutral-500 hover:text-white transition-colors flex items-center gap-1">
+            <Camera className="w-4 h-4" />
+            <span className="text-xs">{uploading ? "..." : t("addPhoto")}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+              disabled={uploading}
+            />
+          </label>
+        }
+      />
+      {photos.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2">
+          {photos.slice(0, 6).map((photo) => (
+            <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden bg-neutral-800 group">
+              <img
+                src={photo.url}
+                alt={photo.caption || "Pet photo"}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+              {photo.caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+                  <p className="text-white text-[10px] truncate">{photo.caption}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <Card className="text-center py-6">
+          <ImageIcon className="w-6 h-6 text-neutral-700 mx-auto mb-2" />
+          <p className="text-neutral-500 text-sm">{t("noPhotos")}</p>
+          <label className="cursor-pointer inline-flex items-center gap-1 mt-2 text-neutral-400 text-xs hover:text-white transition-colors">
+            <Camera className="w-3 h-3" />
+            {t("uploadFirst")}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+              disabled={uploading}
+            />
+          </label>
+        </Card>
+      )}
 
       {/* Events from DB */}
       <SectionHeader title={t("events")} />
