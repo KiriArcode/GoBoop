@@ -25,9 +25,9 @@
     "vetVisit": "Визит к врачу",
     "vetTomorrow": "Завтра, 15:00",
     "vetDetails": "Осмотр ушей",
-    "travelCity": "Берлин",
-    "travelDays": "Через {days} дня",
-    "travelAlert": "Сдать титры!",
+    "noEvents": "Нет записей",
+    "daysShort": "дн.",
+    "travelCity": "Поездка",
     "family": "Семья",
     "details": "Подробнее",
     "familyLeader": "Муж — молодец!",
@@ -54,6 +54,8 @@
     "vetVisit": "Визит к врачу",
     "vetTomorrow": "Завтра в 15:00",
     "remaining": "Осталось",
+    "noVisits": "Нет запланированных визитов",
+    "addVisitHint": "Добавьте через \"+\" → Врач",
     "clinic": "Ветклиника \"Белый Клык\"",
     "doctor": "Др. Смирнова (Терапевт)"
   },
@@ -67,7 +69,10 @@
     "deadline": "Дедлайн:",
     "docsSection": "Документы",
     "urgentTiters": "Сдать титры на антитела",
-    "urgentTitersDesc": "Срок истекает через 48 часов!"
+    "urgentTitersDesc": "Срок истекает через 48 часов!",
+    "tripsSection": "Поездки",
+    "noTrips": "Нет запланированных поездок",
+    "addTripHint": "Добавьте через \"+\" → Поездка"
   },
   "family": {
     "title": "Семья",

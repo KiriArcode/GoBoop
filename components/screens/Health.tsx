@@ -28,6 +28,15 @@ interface WeightRecord {
   recorded_at: string;
 }
 
+interface VetEvent {
+  id: string;
+  type: string;
+  title: string;
+  date: string;
+  time: string | null;
+  location: string | null;
+}
+
 // Demo vaccine data (will be DB-driven later)
 const VACCINES = [
   { name: "Бешенство", date: "2025-03-15", status: "done" as const, nextDue: "2026-03-15" },
@@ -56,6 +65,8 @@ export const Health = () => {
 
   const [weights, setWeights] = useState<WeightRecord[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(true);
+  const [vetEvents, setVetEvents] = useState<VetEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
   const [showAllVaccines, setShowAllVaccines] = useState(false);
 
   const fetchWeights = useCallback(async () => {
@@ -73,9 +84,25 @@ export const Health = () => {
     }
   }, []);
 
+  const fetchEvents = useCallback(async () => {
+    setLoadingEvents(true);
+    try {
+      const res = await fetch(`/api/events?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data: VetEvent[] = await res.json();
+        setVetEvents(data.filter(e => e.type === "vet"));
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchWeights();
-  }, [fetchWeights]);
+    fetchEvents();
+  }, [fetchWeights, fetchEvents]);
 
   const latestWeight = weights[0];
   const prevWeight = weights[1];
@@ -271,27 +298,53 @@ export const Health = () => {
         </button>
       )}
 
-      {/* Vet Visit (existing) */}
-      <SectionHeader title={t("upcomingVisits")} />
-      <Card className="border-l-4 border-l-rose-500">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h3 className="text-white font-medium">{t("vetVisit")}</h3>
-            <p className="text-rose-400 text-sm">{t("vetTomorrow")}</p>
-          </div>
-          <div className="text-right">
-            <span className="text-xs text-neutral-500 block">{t("remaining")}</span>
-            <span className="text-white font-mono">19ч</span>
-          </div>
+      {/* Vet Visits from DB */}
+      <SectionHeader
+        title={t("upcomingVisits")}
+        action={
+          <button
+            onClick={() => { haptic.impact("light"); fetchEvents(); }}
+            className="text-neutral-500 hover:text-white transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingEvents ? "animate-spin" : ""}`} />
+          </button>
+        }
+      />
+      {loadingEvents ? (
+        <Card className="flex items-center justify-center py-6">
+          <RefreshCw className="w-5 h-5 text-neutral-600 animate-spin" />
+        </Card>
+      ) : vetEvents.length > 0 ? (
+        <div className="space-y-2">
+          {vetEvents.map(event => (
+            <Card key={event.id} className="border-l-4 border-l-rose-500">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-white font-medium text-sm">{event.title}</h3>
+                  <p className="text-rose-400 text-xs mt-0.5">
+                    {new Date(event.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+                    {event.time && ` в ${event.time}`}
+                  </p>
+                </div>
+              </div>
+              {event.location && (
+                <div className="bg-neutral-900/50 p-2 rounded-lg border border-neutral-800 mt-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3 h-3 text-neutral-500" />
+                    <span className="text-neutral-300 text-xs">{event.location}</span>
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
         </div>
-        <div className="bg-neutral-900/50 p-3 rounded-lg border border-neutral-800">
-          <div className="flex items-center gap-2 mb-1">
-            <MapPin className="w-3 h-3 text-neutral-500" />
-            <span className="text-neutral-300 text-xs">{t("clinic")}</span>
-          </div>
-          <p className="text-neutral-400 text-xs pl-5">{t("doctor")}</p>
-        </div>
-      </Card>
+      ) : (
+        <Card className="text-center py-6">
+          <MapPin className="w-8 h-8 text-neutral-700 mx-auto mb-2" />
+          <p className="text-neutral-500 text-sm">{t("noVisits")}</p>
+          <p className="text-neutral-600 text-xs mt-1">{t("addVisitHint")}</p>
+        </Card>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   AlertCircle,
@@ -11,16 +11,26 @@ import {
   MapPin,
   ChevronRight,
   Calendar,
+  RefreshCw,
+  PlusCircle,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
 
-// Demo trip data (will be DB-driven later)
-const TRIP = {
-  from: "Тбилиси",
-  to: "Берлин",
+const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
+
+interface TripEvent {
+  id: string;
+  title: string;
+  date: string;
+  time: string | null;
+  location: string | null;
+}
+
+// Fallback trip if no trips in DB
+const FALLBACK_TRIP = {
+  title: "Тбилиси → Берлин",
   date: "2025-03-05",
-  transport: "Самолёт",
 };
 
 type DocStatus = "done" | "urgent" | "pending" | "na";
@@ -49,14 +59,42 @@ export const Travel = () => {
   const { haptic } = useTelegramContext();
 
   const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+  const [trips, setTrips] = useState<TripEvent[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(true);
   const [daysLeft, setDaysLeft] = useState(0);
 
+  const fetchTrips = useCallback(async () => {
+    setLoadingTrips(true);
+    try {
+      const res = await fetch(`/api/events?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data: TripEvent[] = await res.json();
+        setTrips(data.filter((e: { type?: string }) => (e as { type: string }).type === "trip"));
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingTrips(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const tripDate = new Date(TRIP.date);
+    fetchTrips();
+  }, [fetchTrips]);
+
+  // Use the nearest future trip for countdown, or fallback
+  const activeTrip = trips.length > 0
+    ? trips.find(t => new Date(t.date) >= new Date()) || trips[0]
+    : null;
+  const countdownDate = activeTrip?.date || FALLBACK_TRIP.date;
+  const countdownTitle = activeTrip?.title || FALLBACK_TRIP.title;
+
+  useEffect(() => {
+    const tripDate = new Date(countdownDate);
     const now = new Date();
     const diff = Math.ceil((tripDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     setDaysLeft(Math.max(0, diff));
-  }, []);
+  }, [countdownDate]);
 
   const toggleDoc = (id: string) => {
     haptic.selection();
@@ -85,7 +123,7 @@ export const Travel = () => {
           <h1 className="text-2xl font-bold text-white">{t("title")}</h1>
           <div className="flex items-center gap-2 mt-1">
             <MapPin className="w-3 h-3 text-neutral-500" />
-            <span className="text-neutral-400 text-sm">{TRIP.from} → {TRIP.to}</span>
+            <span className="text-neutral-400 text-sm">{countdownTitle}</span>
           </div>
         </div>
       </div>
@@ -100,7 +138,7 @@ export const Travel = () => {
             <div>
               <p className="text-blue-400 text-xs font-medium uppercase tracking-wider">{t("departure")}</p>
               <p className="text-white text-lg font-bold">
-                {new Date(TRIP.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+                {new Date(countdownDate).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
               </p>
             </div>
           </div>
@@ -214,6 +252,47 @@ export const Travel = () => {
           </div>
         </Card>
       ))}
+
+      {/* All trips from DB */}
+      <SectionHeader
+        title={t("tripsSection")}
+        action={
+          <button
+            onClick={() => { haptic.impact("light"); fetchTrips(); }}
+            className="text-neutral-500 hover:text-white transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingTrips ? "animate-spin" : ""}`} />
+          </button>
+        }
+      />
+      {loadingTrips ? (
+        <Card className="flex items-center justify-center py-6">
+          <RefreshCw className="w-5 h-5 text-neutral-600 animate-spin" />
+        </Card>
+      ) : trips.length > 0 ? (
+        <div className="space-y-2">
+          {trips.map(trip => (
+            <Card key={trip.id} className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Plane className="w-4 h-4 text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-medium truncate">{trip.title}</p>
+                <p className="text-blue-400 text-xs">
+                  {new Date(trip.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-700 shrink-0" />
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="text-center py-6">
+          <PlusCircle className="w-8 h-8 text-neutral-700 mx-auto mb-2" />
+          <p className="text-neutral-500 text-sm">{t("noTrips")}</p>
+          <p className="text-neutral-600 text-xs mt-1">{t("addTripHint")}</p>
+        </Card>
+      )}
     </div>
   );
 };

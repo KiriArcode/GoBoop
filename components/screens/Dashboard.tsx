@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   Heart,
@@ -12,9 +12,20 @@ import {
   ChevronRight,
   Trophy,
   Zap,
-  AlertCircle,
+  Calendar,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
+
+const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
+
+interface EventItem {
+  id: string;
+  type: string;
+  title: string;
+  date: string;
+  time: string | null;
+  location: string | null;
+}
 
 interface DashboardProps {
   happiness: number;
@@ -32,6 +43,26 @@ export const Dashboard = ({
   userName,
 }: DashboardProps) => {
   const t = useTranslations("dashboard");
+  const [events, setEvents] = useState<EventItem[]>([]);
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/events?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const upcomingVet = events.find(e => e.type === "vet");
+  const upcomingTrip = events.find(e => e.type === "trip");
 
   return (
     <div className="space-y-4 animate-fadeIn pb-24">
@@ -144,7 +175,7 @@ export const Dashboard = ({
         </div>
       </Card>
 
-      {/* Events */}
+      {/* Events from DB */}
       <SectionHeader title={t("events")} />
       <div className="grid grid-cols-2 gap-3">
         <Card
@@ -158,9 +189,23 @@ export const Dashboard = ({
             </div>
             <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-rose-500 transition-colors" />
           </div>
-          <p className="text-neutral-400 text-xs mb-0.5">{t("vetVisit")}</p>
-          <p className="text-white font-medium text-sm">{t("vetTomorrow")}</p>
-          <p className="text-rose-400 text-[10px] mt-1">{t("vetDetails")}</p>
+          {upcomingVet ? (
+            <>
+              <p className="text-neutral-400 text-xs mb-0.5">{upcomingVet.title}</p>
+              <p className="text-white font-medium text-sm">
+                {new Date(upcomingVet.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                {upcomingVet.time && `, ${upcomingVet.time}`}
+              </p>
+              {upcomingVet.location && (
+                <p className="text-rose-400 text-[10px] mt-1">{upcomingVet.location}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-neutral-400 text-xs mb-0.5">{t("vetVisit")}</p>
+              <p className="text-neutral-600 text-sm">{t("noEvents")}</p>
+            </>
+          )}
         </Card>
 
         <Card
@@ -174,12 +219,25 @@ export const Dashboard = ({
             </div>
             <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-blue-500 transition-colors" />
           </div>
-          <p className="text-neutral-400 text-xs mb-0.5">{t("travelCity")}</p>
-          <p className="text-white font-medium text-sm">{t("travelDays", { days: 24 })}</p>
-          <div className="flex items-center gap-1 mt-2 bg-blue-900/30 px-2 py-1 rounded w-fit">
-            <AlertCircle className="w-3 h-3 text-blue-400" />
-            <span className="text-[10px] text-blue-200">{t("travelAlert")}</span>
-          </div>
+          {upcomingTrip ? (
+            <>
+              <p className="text-neutral-400 text-xs mb-0.5">{upcomingTrip.title}</p>
+              <p className="text-white font-medium text-sm">
+                {new Date(upcomingTrip.date).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+              </p>
+              <div className="flex items-center gap-1 mt-2 bg-blue-900/30 px-2 py-1 rounded w-fit">
+                <Calendar className="w-3 h-3 text-blue-400" />
+                <span className="text-[10px] text-blue-200">
+                  {Math.max(0, Math.ceil((new Date(upcomingTrip.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} {t("daysShort")}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-neutral-400 text-xs mb-0.5">{t("travelCity")}</p>
+              <p className="text-neutral-600 text-sm">{t("noEvents")}</p>
+            </>
+          )}
         </Card>
       </div>
 

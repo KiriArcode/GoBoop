@@ -25,9 +25,9 @@
     "vetVisit": "Vet visit",
     "vetTomorrow": "Tomorrow, 3:00 PM",
     "vetDetails": "Ear checkup",
-    "travelCity": "Berlin",
-    "travelDays": "In {days} days",
-    "travelAlert": "Submit titers!",
+    "noEvents": "No entries",
+    "daysShort": "days",
+    "travelCity": "Trip",
     "family": "Family",
     "details": "Details",
     "familyLeader": "Husband — great job!",
@@ -54,6 +54,8 @@
     "vetVisit": "Vet visit",
     "vetTomorrow": "Tomorrow at 3:00 PM",
     "remaining": "Remaining",
+    "noVisits": "No scheduled visits",
+    "addVisitHint": "Add via \"+\" → Vet",
     "clinic": "Vet Clinic \"White Fang\"",
     "doctor": "Dr. Smirnova (Therapist)"
   },
@@ -67,7 +69,10 @@
     "deadline": "Deadline:",
     "docsSection": "Documents",
     "urgentTiters": "Submit antibody titers",
-    "urgentTitersDesc": "Deadline expires in 48 hours!"
+    "urgentTitersDesc": "Deadline expires in 48 hours!",
+    "tripsSection": "Trips",
+    "noTrips": "No trips planned",
+    "addTripHint": "Add via \"+\" → Trip"
   },
   "family": {
     "title": "Family",
