@@ -42,6 +42,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// DELETE /api/weight
+export async function DELETE(request: NextRequest) {
+  const envErr = checkEnv();
+  if (envErr) return envErr;
+  try {
+    const { id } = await request.json();
+    if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase.from("weight_records").delete().eq("id", id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
 // POST /api/weight
 export async function POST(request: NextRequest) {
   const envErr = checkEnv();

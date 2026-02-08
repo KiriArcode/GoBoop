@@ -17,6 +17,8 @@ import {
   RefreshCw,
   Camera,
   Image as ImageIcon,
+  Trash2,
+  ShoppingCart,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 
@@ -146,6 +148,32 @@ export const Dashboard = ({
       // silent
     } finally {
       setUploading(false);
+    }
+  };
+
+  const deleteItem = async (endpoint: string, id: string, refreshFn: () => void) => {
+    if (!confirm("Удалить?")) return;
+    try {
+      await fetch(`/api/${endpoint}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      refreshFn();
+    } catch { /* silent */ }
+  };
+
+  const toggleShoppingStatus = async (item: ShoppingItem) => {
+    const newStatus = item.status === "bought" ? "pending" : "bought";
+    setShopping(prev => prev.map(s => s.id === item.id ? { ...s, status: newStatus } : s));
+    try {
+      await fetch("/api/shopping", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, status: newStatus }),
+      });
+    } catch {
+      setShopping(prev => prev.map(s => s.id === item.id ? { ...s, status: item.status } : s));
     }
   };
 
@@ -424,27 +452,49 @@ export const Dashboard = ({
       </Card>
 
       {/* Shopping list */}
-      {shopping.length > 0 && (
-        <>
-          <SectionHeader title={t("shoppingTitle")} />
-          <Card>
-            <div className="space-y-2">
-              {shopping.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-neutral-800 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{item.status === "bought" ? "✅" : "🛒"}</span>
-                    <span className={`text-sm ${item.status === "bought" ? "text-neutral-500 line-through" : "text-white"}`}>
-                      {item.title}
-                    </span>
-                  </div>
+      <SectionHeader
+        title={t("shoppingTitle")}
+        action={
+          <div className="flex items-center gap-1 text-neutral-500">
+            <ShoppingCart className="w-3 h-3" />
+            <span className="text-xs">{shopping.filter(s => s.status === "pending").length}</span>
+          </div>
+        }
+      />
+      {shopping.length > 0 ? (
+        <Card>
+          <div className="space-y-1">
+            {shopping.map((item) => (
+              <div key={item.id} className="flex items-center justify-between py-2 border-b border-neutral-800/50 last:border-0 group">
+                <button
+                  onClick={() => toggleShoppingStatus(item)}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                >
+                  <span className="text-sm shrink-0">{item.status === "bought" ? "✅" : "⬜"}</span>
+                  <span className={`text-sm truncate ${item.status === "bought" ? "text-neutral-500 line-through" : "text-white"}`}>
+                    {item.title}
+                  </span>
+                </button>
+                <div className="flex items-center gap-2 shrink-0">
                   {item.price && (
                     <span className="text-neutral-500 text-xs">{item.price} ₽</span>
                   )}
+                  <button
+                    onClick={() => deleteItem("shopping", item.id, fetchShopping)}
+                    className="p-1 text-neutral-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : (
+        <Card className="text-center py-4">
+          <ShoppingCart className="w-5 h-5 text-neutral-700 mx-auto mb-1" />
+          <p className="text-neutral-600 text-xs">Список покупок пуст</p>
+        </Card>
       )}
 
       {/* Recent notes */}
@@ -480,6 +530,12 @@ export const Dashboard = ({
                     </span>
                   </div>
                 </div>
+                <button
+                  onClick={() => deleteItem("notes", note.id, fetchNotes)}
+                  className="p-1 text-neutral-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </Card>
           ))}

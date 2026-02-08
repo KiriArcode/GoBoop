@@ -70,6 +70,10 @@ export const QuickAddMenu = ({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState("");
 
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoCaption, setPhotoCaption] = useState("");
+
   const resetForms = () => {
     setTripFrom(""); setTripTo(""); setTripDate("");
     setVetClinic(""); setVetDate(""); setVetTime("");
@@ -77,6 +81,7 @@ export const QuickAddMenu = ({
     setShoppingTitle("");
     setTextContent(""); setDateTime("");
     setAiInput(""); setAiResult("");
+    setPhotoFile(null); setPhotoPreview(null); setPhotoCaption("");
     setSaveStatus("idle"); setErrorMsg("");
   };
 
@@ -110,6 +115,32 @@ export const QuickAddMenu = ({
       const msg = e instanceof Error ? e.message : "Неизвестная ошибка";
       setErrorMsg(msg);
       console.error(`[saveToApi] ${endpoint}:`, msg);
+    }
+  };
+
+  const handlePhotoSave = async () => {
+    if (!photoFile) return;
+    setSaveStatus("saving");
+    setErrorMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("file", photoFile);
+      formData.append("pet_id", PET_ID);
+      formData.append("created_by", USER_ID);
+      if (photoCaption) formData.append("caption", photoCaption);
+      const res = await fetch("/api/photos", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `Ошибка загрузки (${res.status})`);
+      }
+      setSaveStatus("saved");
+      haptic.notification("success");
+      setTimeout(() => handleClose(), 1200);
+    } catch (e) {
+      setSaveStatus("error");
+      haptic.notification("error");
+      const msg = e instanceof Error ? e.message : "Неизвестная ошибка";
+      setErrorMsg(msg);
     }
   };
 
@@ -339,18 +370,68 @@ export const QuickAddMenu = ({
           </div>
         );
       case "photo":
+        return (
+          <div className="animate-slideUp flex flex-col items-center justify-center py-6">
+            <div className="w-20 h-20 rounded-full bg-neutral-800 border-2 border-dashed border-neutral-600 flex items-center justify-center mb-4">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <Camera className="w-8 h-8 text-neutral-500" />
+              )}
+            </div>
+            <p className="text-neutral-400 text-sm text-center mb-4">
+              {tf("photo.description")}
+            </p>
+            <input
+              type="text"
+              value={photoCaption}
+              onChange={(e) => setPhotoCaption(e.target.value)}
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-purple-500 outline-none mb-3 text-sm"
+              placeholder="Подпись (необязательно)"
+            />
+            <div className="flex gap-2 w-full">
+              <label className="flex-1 py-3 bg-neutral-800 border border-neutral-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 cursor-pointer hover:bg-neutral-700 transition-colors">
+                <Camera className="w-4 h-4" />
+                {photoFile ? photoFile.name.substring(0, 15) + "..." : tf("photo.open")}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setPhotoFile(f);
+                      setPhotoPreview(URL.createObjectURL(f));
+                    }
+                  }}
+                />
+              </label>
+              {photoFile && (
+                <button
+                  onClick={handlePhotoSave}
+                  disabled={saveStatus === "saving" || saveStatus === "saved"}
+                  className={`flex-1 py-3 ${saveStatus === "saved" ? "bg-emerald-500" : "bg-purple-500"} text-white font-bold rounded-xl flex items-center justify-center gap-2`}
+                >
+                  {saveStatus === "saving" && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {saveStatus === "saved" ? "Загружено!" : "Загрузить"}
+                </button>
+              )}
+            </div>
+            <ErrorMessage />
+          </div>
+        );
       case "file":
         return (
-          <div className="animate-slideUp flex flex-col items-center justify-center py-8">
+          <div className="animate-slideUp flex flex-col items-center justify-center py-6">
             <div className="w-20 h-20 rounded-full bg-neutral-800 border-2 border-dashed border-neutral-600 flex items-center justify-center mb-4">
-              {quickActionType === "photo" ? <Camera className="w-8 h-8 text-neutral-500" /> : <Paperclip className="w-8 h-8 text-neutral-500" />}
+              <Paperclip className="w-8 h-8 text-neutral-500" />
             </div>
-            <p className="text-neutral-400 text-sm text-center mb-6">
-              {quickActionType === "photo" ? tf("photo.description") : tf("fileUpload.description")}
+            <p className="text-neutral-400 text-sm text-center mb-4">
+              {tf("fileUpload.description")}
             </p>
-            <button className="w-full py-3 bg-neutral-800 border border-neutral-700 text-white font-medium rounded-xl">
-              {quickActionType === "photo" ? tf("photo.open") : tf("fileUpload.open")}
-            </button>
+            <p className="text-neutral-600 text-xs text-center">
+              Функция в разработке. Пока можно загрузить фото через кнопку "Фото".
+            </p>
           </div>
         );
       default:

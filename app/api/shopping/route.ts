@@ -72,6 +72,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// DELETE /api/shopping
+export async function DELETE(request: NextRequest) {
+  const envErr = checkEnv();
+  if (envErr) return envErr;
+  try {
+    const { id } = await request.json();
+    if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase.from("shopping_items").delete().eq("id", id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
 // PATCH /api/shopping (mark as bought)
 export async function PATCH(request: NextRequest) {
   const envErr = checkEnv();
