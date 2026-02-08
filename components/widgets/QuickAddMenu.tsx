@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { QuickActionBtn } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
+import { googleCalendarUrl } from "@/lib/calendar";
 
 const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
 const USER_ID = "demo-user";
@@ -93,7 +94,7 @@ export const QuickAddMenu = ({
     }, 300);
   };
 
-  const saveToApi = async (endpoint: string, body: Record<string, unknown>) => {
+  const saveToApi = async (endpoint: string, body: Record<string, unknown>, onSuccess?: () => void) => {
     setSaveStatus("saving");
     setErrorMsg("");
     try {
@@ -108,7 +109,10 @@ export const QuickAddMenu = ({
       }
       setSaveStatus("saved");
       haptic.notification("success");
-      setTimeout(() => handleClose(), 1200);
+      if (onSuccess) {
+        onSuccess();
+      }
+      setTimeout(() => handleClose(), 1500);
     } catch (e) {
       setSaveStatus("error");
       haptic.notification("error");
@@ -255,7 +259,14 @@ export const QuickAddMenu = ({
                 <label className="text-xs text-neutral-500 mb-1 block">{tf("trip.date")}</label>
                 <input type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none" />
               </div>
-              <SaveButton onClick={() => saveToApi("events", { type: "trip", title: `${tripFrom} → ${tripTo}`, date: tripDate || new Date().toISOString().split("T")[0] })} color="bg-blue-500" label={tf("trip.submit")} />
+              <SaveButton onClick={() => {
+                const date = tripDate || new Date().toISOString().split("T")[0];
+                const title = `${tripFrom} → ${tripTo}`;
+                saveToApi("events", { type: "trip", title, date }, () => {
+                  const calUrl = googleCalendarUrl({ title: `✈️ ${title}`, date, description: "GoBoop — поездка с питомцем" });
+                  window.open(calUrl, "_blank");
+                });
+              }} color="bg-blue-500" label={tf("trip.submit")} />
               <ErrorMessage />
             </div>
           </div>
@@ -282,7 +293,15 @@ export const QuickAddMenu = ({
                   <input type="time" value={vetTime} onChange={(e) => setVetTime(e.target.value)} className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none" />
                 </div>
               </div>
-              <SaveButton onClick={() => saveToApi("events", { type: "vet", title: vetClinic || "Визит к врачу", date: vetDate || new Date().toISOString().split("T")[0], time: vetTime || null, location: vetClinic })} color="bg-rose-500" label={tf("vet.submit")} />
+              <SaveButton onClick={() => {
+                const date = vetDate || new Date().toISOString().split("T")[0];
+                const time = vetTime || null;
+                const title = vetClinic || "Визит к врачу";
+                saveToApi("events", { type: "vet", title, date, time, location: vetClinic }, () => {
+                  const calUrl = googleCalendarUrl({ title: `🏥 ${title}`, date, time, location: vetClinic, description: "GoBoop — визит к ветеринару" });
+                  window.open(calUrl, "_blank");
+                });
+              }} color="bg-rose-500" label={tf("vet.submit")} />
               <ErrorMessage />
             </div>
           </div>

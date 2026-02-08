@@ -19,10 +19,14 @@ export function googleCalendarUrl(event: {
   let endDate: string;
 
   if (time) {
-    const timeClean = time.replace(/:/g, "");
-    startDate = `${dateClean}T${timeClean}00`;
+    // Normalize time: "15:00:00" → "15:00", "15:00" → "15:00"
+    const timeParts = time.split(":");
+    const hours = parseInt(timeParts[0], 10);
+    const minutes = parseInt(timeParts[1], 10);
+    const hh = hours.toString().padStart(2, "0");
+    const mm = minutes.toString().padStart(2, "0");
+    startDate = `${dateClean}T${hh}${mm}00`;
     // Calculate end time
-    const [hours, minutes] = time.split(":").map(Number);
     const endMinutes = hours * 60 + minutes + durationMinutes;
     const endH = Math.floor(endMinutes / 60).toString().padStart(2, "0");
     const endM = (endMinutes % 60).toString().padStart(2, "0");
@@ -61,7 +65,10 @@ export function generateICS(event: {
   const { title, date, time, location, description } = event;
   const dateClean = date.replace(/-/g, "");
   const dtStart = time
-    ? `${dateClean}T${time.replace(/:/g, "")}00`
+    ? (() => {
+        const parts = time.split(":");
+        return `${dateClean}T${parts[0].padStart(2, "0")}${parts[1].padStart(2, "0")}00`;
+      })()
     : dateClean;
   const dtEnd = time
     ? (() => {
