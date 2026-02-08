@@ -16,9 +16,12 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  CalendarPlus,
+  Trash2,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
+import { googleCalendarUrl } from "@/lib/calendar";
 
 const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
 
@@ -317,14 +320,35 @@ export const Health = () => {
       ) : vetEvents.length > 0 ? (
         <div className="space-y-2">
           {vetEvents.map(event => (
-            <Card key={event.id} className="border-l-4 border-l-rose-500">
+            <Card key={event.id} className="border-l-4 border-l-rose-500 group">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <h3 className="text-white font-medium text-sm">{event.title}</h3>
                   <p className="text-rose-400 text-xs mt-0.5">
                     {new Date(event.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
                     {event.time && ` в ${event.time}`}
                   </p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <a
+                    href={googleCalendarUrl({ title: `🏥 ${event.title}`, date: event.date, time: event.time, location: event.location, description: "GoBoop — визит к ветеринару" })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 text-neutral-600 hover:text-blue-400 transition-colors"
+                    title="Добавить в Google Calendar"
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                  </a>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Удалить?")) return;
+                      await fetch("/api/events", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: event.id }) });
+                      fetchEvents();
+                    }}
+                    className="p-1.5 text-neutral-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
               {event.location && (

@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Users,
   PawPrint,
+  Trash2,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
@@ -88,6 +89,21 @@ export const Family = () => {
         t.id === task.id ? { ...t, status: task.status } : t
       ));
       haptic.notification("error");
+    }
+  };
+
+  const deleteTask = async (id: string) => {
+    if (!confirm("Удалить задачу?")) return;
+    setTasks(prev => prev.filter(t => t.id !== id));
+    try {
+      await fetch("/api/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      haptic.notification("success");
+    } catch {
+      fetchTasks(); // Revert
     }
   };
 
@@ -195,9 +211,17 @@ export const Family = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md shrink-0">
-                <Zap className="w-3 h-3 text-amber-400" />
-                <span className="text-amber-400 text-xs font-bold">{task.xp_reward}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md">
+                  <Zap className="w-3 h-3 text-amber-400" />
+                  <span className="text-amber-400 text-xs font-bold">{task.xp_reward}</span>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                  className="p-1 text-neutral-700 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </Card>
           ))}
