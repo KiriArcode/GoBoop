@@ -1,92 +1,125 @@
-GoBoop Feature List
+# GoBoop Feature List
 
-Core Status
+## Core Status
 
-ID: F-001
-Name: Smart Dashboard (Главный Хаб)
-Description: Сводный экран, показывающий статус питомца, индекс счастья и ближайшие критические задачи.
-UI Elements:
+**ID:** F-001  
+**Name:** Smart Dashboard (Главный Хаб)  
+**Description:** Сводный экран, показывающий статус питомца, индекс счастья и ближайшие критические задачи.
 
-Header: Имя, статус (дома/гуляет), Индекс Счастья (виджет).
+| UI Elements | Status |
+|-------------|--------|
+| Header: Имя, статус (дома/гуляет), Индекс Счастья (виджет) | UI ✓ / Data — / Backend — |
+| Walk Block: Статус прогулки, таймер "прошло времени", кнопка действия | UI ✓ / Data — / Backend — |
+| Upcoming Events: Мини-карточки (Врач, Поездка) | UI ✓ / Data ✓ / Backend ✓ |
+| Family Leaderboard: Мини-виджет лидера недели | UI ✓ / Data — / Backend — |
 
-Walk Block: Статус прогулки, таймер "прошло времени", кнопка действия.
+---
 
-Upcoming Events: Мини-карточки (Врач, Поездка).
+## Quick Actions
 
-Family Leaderboard: Мини-виджет лидера недели.
+**ID:** F-002  
+**Name:** Quick Action Hub ("Плюсик")  
+**Description:** Многоуровневое меню для быстрого ввода данных без перехода на другие экраны.
 
-Quick Actions
+| UI Elements | Status |
+|-------------|--------|
+| Bottom Sheet (Шторка) | UI ✓ / Data — / Backend — |
+| AI Chat Input: Строка ввода для текстовых команд | UI ✓ / Data ✓ / Backend ✓ |
+| Grid 3x3: Кнопки (Поездка, Врач, Вес, Фото, Файл, Покупка, Заметка, Напоминание, Задача, **Лечение**) | UI ✓ / Data — / Backend — |
+| Drill-down Forms: Формы ввода для каждого действия внутри шторки | UI ✓ / Data ✓ / Backend ✓ |
 
-ID: F-002
-Name: Quick Action Hub ("Плюсик")
-Description: Многоуровневое меню для быстрого ввода данных без перехода на другие экраны.
-UI Elements:
+---
 
-Bottom Sheet (Шторка).
+## Health Module
 
-AI Chat Input: Строка ввода для текстовых команд.
+**ID:** F-003  
+**Name:** Health & Medical Records  
+**Description:** Управление здоровьем, историей болезней и весом.
 
-Grid 3x3: Кнопки (Поездка, Врач, Вес, Фото, Файл, Покупка, Заметка, Напоминание, Задача).
+### Подразделы
 
-Drill-down Forms: Формы ввода для каждого действия внутри шторки.
+| Подраздел | Описание | Status |
+|-----------|----------|--------|
+| **Weight Tracker** | График веса + Калькулятор "Умное взвешивание" (Человек с питомцем - Человек) | UI ✓ / Data ✓ / Backend ✓ |
+| **Vaccine Log** | Список и сроки прививок | UI ✓ / Data — / Backend — |
+| **Active Treatment** (расширенный) | Текущая болезнь, этапы лечения, лекарства, процедуры, расписание приёма, дедлайны, кнопка «Принял» | UI частично / Data — / Backend — |
 
-Health Module
+**UI Elements Active Treatment:**
+- Карточка кейса: диагноз, дата начала, прогресс-бар
+- Этапы: чекбоксы (Осмотр, Капли 7 дней, Контрольный визит)
+- Лекарства: карточки с расписанием (08:00, 20:00), дедлайн «до 5 фев», прогресс «осталось 2 из 7 дней»
+- Процедуры: частота (ежедневно, раз в 2 дня), инструкция (оставить на 5 мин)
+- Параллельный приём: несколько лекарств/процедур одновременно
+- Кнопка «Принял» с выбором «кто принял» (для семьи)
 
-ID: F-003
-Name: Health & Medical Records
-Description: Управление здоровьем, историей болезней и весом.
-UI Elements:
+---
 
-Active Case Card: Текущая болезнь, этапы лечения.
+## Travel Module
 
-Weight Tracker: График веса + Калькулятор "Умное взвешивание" (Человек с питомцем - Человек).
+**ID:** F-004  
+**Name:** Travel Assistant  
+**Description:** Подготовка к релокации/путешествию.
 
-Vaccine Log: Список и сроки прививок.
+### Подразделы
 
-Travel Module
+| Подраздел | Описание | Status |
+|-----------|----------|--------|
+| **Countdown Timer** | Дни до поездки | UI ✓ / Data ✓ / Backend ✓ |
+| **Document Checklist** | Список документов со статусами (Титры, Чип, Паспорт) | UI ✓ / Data — / Backend — |
+| **Country Templates** | Шаблоны требований по странам (ЕС, UK, СНГ) | UI — / Data — / Backend — |
+| **Custom Items** | Добавление/удаление пунктов в чеклисте для конкретной поездки | UI — / Data — / Backend — |
 
-ID: F-004
-Name: Travel Assistant
-Description: Подготовка к релокации/путешествию.
-UI Elements:
+**UI Elements:**
+- Выбор страны назначения при создании поездки
+- Чеклист: urgent / pending / done / na
+- Прогресс-бар готовности
+- Urgent Alerts: красные уведомления о критических сроках
 
-Countdown Timer: Дни до поездки.
+---
 
-Document Checklist: Список документов со статусами (Титры, Чип, Паспорт).
+## Family Module
 
-Urgent Alerts: Красные уведомления о критических сроках (дедлайны сдачи анализов).
+**ID:** F-005  
+**Name:** Family Sync & Gamification  
+**Description:** Синхронизация задач между членами семьи и геймификация рутины.
 
-Family Module
+### Family Mode (подразделы)
 
-ID: F-005
-Name: Family Sync & Gamification
-Description: Синхронизация задач между членами семьи и геймификация рутины.
-UI Elements:
+| Подраздел | Описание | Status |
+|-----------|----------|--------|
+| **Assign Tasks** | Назначение задач: «Кому» (муж, жена, дети). Фильтр «Мои задачи» | UI частично / Data ✓ / Backend ✓ |
+| **Shared View** | Синхронный просмотр: все видят актуальное состояние лечения/поездки | UI ✓ / Data ✓ / Backend ✓ |
+| **Notifications** | Push/Telegram: «Через 2 часа — Суролан», «Дедлайн: титры до 20 фев» | UI — / Data — / Backend — |
+| **Activity Log** | Лента активности: «Муж дал Суролан в 08:15», «Жена отметила контрольный визит» | UI ✓ / Data — / Backend — |
 
-Leaderboard: Рейтинг членов семьи (XP за выполнение задач).
+**UI Elements:**
+- Leaderboard: Рейтинг членов семьи (XP за выполнение задач)
+- Tasks List: Общий список задач (Купить корм, Дать таблетку)
+- Activity Log: Кто и что сделал (история)
 
-Activity Log: Кто и что сделал (история).
+---
 
-Tasks List: Общий список задач (Купить корм, Дать таблетку).
+## IoT Integration (Future)
 
-IoT Integration (Future)
+**ID:** F-006  
+**Name:** Smart Home Connect  
+**Description:** Интеграция с физическими устройствами.
 
-ID: F-006
-Name: Smart Home Connect
-Description: Интеграция с физическими устройствами.
-UI Elements:
+| UI Elements | Status |
+|-------------|--------|
+| Button Widget: Статус с умной кнопки (Zigbee) | UI — / Data — / Backend — |
+| Feeder Status: Данные с автокормушки | UI — / Data — / Backend — |
 
-Button Widget: Статус с умной кнопки (Zigbee).
+---
 
-Feeder Status: Данные с автокормушки.
+## Telegram Bot
 
-Telegram Bot
+**ID:** F-007  
+**Name:** Telegram Bot — Voice/Text Commands  
+**Description:** Парсинг голосовых и текстовых команд через AI в групповом чате.
 
-ID: F-007
-Name: Telegram Bot — Voice/Text Commands
-Description: Парсинг голосовых и текстовых команд через AI в групповом чате.
-UI Elements:
-
-Фото в чате → загрузка в Google Drive, сохранение ссылки в Supabase, AI-теги.
-
-Текст/голос ("Купили корм") → парсинг AI → создание записи в БД (задача, заметка, вес).
+| UI Elements | Status |
+|-------------|--------|
+| Фото в чате → загрузка в Google Drive, сохранение ссылки в Supabase, AI-теги | UI — / Data — / Backend — |
+| Текст/голос ("Купили корм") → парсинг AI → создание записи в БД | UI — / Data ✓ / Backend ✓ |
+| Inline Keyboard: «Выгулял», «Дал таблетку», «Принял» | UI — / Data — / Backend — |

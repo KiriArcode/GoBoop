@@ -46,6 +46,14 @@
     "activeCase": "Active Treatment",
     "since": "since",
     "daysLeft": "{days} days left",
+    "untilEnd": "until {date}",
+    "treatmentProgress": "Treatment progress",
+    "medications": "Medications",
+    "procedures": "Procedures",
+    "taken": "Taken",
+    "markTaken": "Mark as taken",
+    "noActiveTreatment": "No active treatment",
+    "addTreatmentHint": "Add via \"+\" → Treatment",
     "weightTitle": "Weight",
     "currentWeight": "Current weight",
     "kg": "kg",
@@ -105,7 +113,8 @@
     "note": "Note",
     "reminder": "Reminder",
     "task": "Task",
-    "weight": "Weight"
+    "weight": "Weight",
+    "treatment": "Treatment"
   },
   "forms": {
     "trip": {
@@ -113,6 +122,8 @@
       "from": "From",
       "to": "To",
       "date": "Departure date",
+      "country": "Destination country",
+      "countryPlaceholder": "Select country",
       "submit": "Create route"
     },
     "vet": {
@@ -158,6 +169,29 @@
     "fileUpload": {
       "description": "Attach PDF or DOC file",
       "open": "Open files"
+    },
+    "treatment": {
+      "title": "Add to treatment",
+      "type": "Type",
+      "typeMedication": "Medication",
+      "typeProcedure": "Procedure",
+      "caseLabel": "Treatment case",
+      "caseNew": "New case",
+      "caseTitle": "Title (diagnosis)",
+      "name": "Name",
+      "dosage": "Dosage",
+      "frequency": "Frequency",
+      "freq1": "Once daily",
+      "freq2": "Twice daily",
+      "freq12": "Every 12 hours",
+      "freq3": "Three times daily",
+      "freqDaily": "Daily",
+      "freq2days": "Every 2 days",
+      "startDate": "Start",
+      "endDate": "End",
+      "instructions": "Instructions (e.g. leave for 5 min)",
+      "durationMin": "Duration (min)",
+      "submit": "Add"
     }
   }
 }

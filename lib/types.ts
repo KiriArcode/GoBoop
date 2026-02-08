@@ -25,6 +25,7 @@ export interface PetEvent {
   date: string;
   time?: string;
   location?: string;
+  country_code?: string;
   created_by: string;
   created_at: string;
 }
@@ -95,6 +96,95 @@ export interface Feedback {
   user_id: string;
   rating: number; // 1-5
   comment?: string;
+  created_at: string;
+}
+
+// --- Treatment ---
+export type TreatmentCaseStatus = "active" | "completed" | "cancelled";
+export type MedicationForm = "oral" | "drops" | "ointment" | "injection" | "other";
+
+export interface TreatmentCase {
+  id: string;
+  pet_id: string;
+  title: string;
+  diagnosis?: string;
+  start_date: string;
+  end_date?: string;
+  status: TreatmentCaseStatus;
+  vet_event_id?: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface Medication {
+  id: string;
+  treatment_case_id: string;
+  name: string;
+  dosage?: string;
+  form?: MedicationForm;
+  frequency: string;
+  start_date: string;
+  end_date?: string;
+  instructions?: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface Procedure {
+  id: string;
+  treatment_case_id: string;
+  name: string;
+  description?: string;
+  frequency: string;
+  duration_minutes?: number;
+  instructions?: string;
+  start_date: string;
+  end_date?: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface TreatmentStep {
+  id: string;
+  treatment_case_id: string;
+  label: string;
+  done: boolean;
+  due_date?: string;
+  order: number;
+  created_at: string;
+}
+
+export interface MedicationDose {
+  id: string;
+  medication_id: string;
+  scheduled_at: string;
+  taken_at?: string;
+  taken_by?: string;
+  created_at: string;
+}
+
+// --- Travel (trip documents) ---
+export type TripDocumentStatus = "done" | "pending" | "urgent" | "na";
+
+export interface CountryDocumentTemplate {
+  id: string;
+  country_code: string;
+  doc_name: string;
+  days_before_departure: number;
+  description?: string;
+  order: number;
+  created_at: string;
+}
+
+export interface TripDocument {
+  id: string;
+  event_id: string;
+  template_id?: string;
+  name: string;
+  status: TripDocumentStatus;
+  deadline?: string;
+  note?: string;
+  order: number;
   created_at: string;
 }
 

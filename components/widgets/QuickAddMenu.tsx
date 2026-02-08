@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   Activity,
@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Check,
+  Pill,
 } from "lucide-react";
 import { QuickActionBtn } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
@@ -55,6 +56,7 @@ export const QuickAddMenu = ({
   const [tripFrom, setTripFrom] = useState("");
   const [tripTo, setTripTo] = useState("");
   const [tripDate, setTripDate] = useState("");
+  const [tripCountry, setTripCountry] = useState("");
 
   const [vetClinic, setVetClinic] = useState("");
   const [vetDate, setVetDate] = useState("");
@@ -76,16 +78,40 @@ export const QuickAddMenu = ({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoCaption, setPhotoCaption] = useState("");
 
+  const [treatmentType, setTreatmentType] = useState<"medication" | "procedure">("medication");
+  const [treatmentCaseId, setTreatmentCaseId] = useState<string>("new");
+  const [treatmentCases, setTreatmentCases] = useState<Array<{ id: string; title: string }>>([]);
+  const [treatmentCaseTitle, setTreatmentCaseTitle] = useState("");
+  const [treatmentName, setTreatmentName] = useState("");
+  const [treatmentDosage, setTreatmentDosage] = useState("");
+  const [treatmentFrequency, setTreatmentFrequency] = useState("2 раза в день");
+  const [treatmentStartDate, setTreatmentStartDate] = useState("");
+  const [treatmentEndDate, setTreatmentEndDate] = useState("");
+  const [treatmentInstructions, setTreatmentInstructions] = useState("");
+  const [treatmentDuration, setTreatmentDuration] = useState("");
+
   const resetForms = () => {
-    setTripFrom(""); setTripTo(""); setTripDate("");
+    setTripFrom(""); setTripTo(""); setTripDate(""); setTripCountry("");
     setVetClinic(""); setVetDate(""); setVetTime("");
     setWeightTotal(""); setWeightOwner("");
     setShoppingTitle("");
     setTextContent(""); setDateTime("");
     setAiInput(""); setAiResult("");
     setPhotoFile(null); setPhotoPreview(null); setPhotoCaption("");
+    setTreatmentType("medication"); setTreatmentCaseId("new"); setTreatmentCaseTitle("");
+    setTreatmentName(""); setTreatmentDosage(""); setTreatmentFrequency("2 раза в день");
+    setTreatmentStartDate(""); setTreatmentEndDate(""); setTreatmentInstructions(""); setTreatmentDuration("");
     setSaveStatus("idle"); setErrorMsg(""); setCalendarUrl(null);
   };
+
+  useEffect(() => {
+    if (quickActionType === "treatment") {
+      fetch(`/api/treatment-cases?pet_id=${PET_ID}&status=active`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((cases) => setTreatmentCases(cases.map((c: { id: string; title: string }) => ({ id: c.id, title: c.title }))))
+        .catch(() => setTreatmentCases([]));
+    }
+  }, [quickActionType]);
 
   const handleClose = () => {
     setShowQuickAdd(false);
@@ -262,12 +288,69 @@ export const QuickAddMenu = ({
                 <label className="text-xs text-neutral-500 mb-1 block">{tf("trip.date")}</label>
                 <input type="date" value={tripDate} onChange={(e) => setTripDate(e.target.value)} className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none" />
               </div>
-              <SaveButton onClick={() => {
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("trip.country")}</label>
+                <select
+                  value={tripCountry}
+                  onChange={(e) => setTripCountry(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none"
+                >
+                  <option value="">{tf("trip.countryPlaceholder")}</option>
+                  <option value="EU">ЕС</option>
+                  <option value="UK">Великобритания</option>
+                  <option value="GE">Грузия</option>
+                  <option value="RU">Россия</option>
+                </select>
+              </div>
+              <SaveButton onClick={async () => {
                 const date = tripDate || new Date().toISOString().split("T")[0];
-                const title = `${tripFrom} → ${tripTo}`;
-                saveToApi("events", { type: "trip", title, date }, () => {
-                  setCalendarUrl(googleCalendarUrl({ title: `✈️ ${title}`, date, description: "GoBoop — поездка с питомцем" }));
+                const title = tripFrom && tripTo ? `${tripFrom} → ${tripTo}` : tripTo || tripFrom || "Поездка";
+                const body: Record<string, unknown> = { type: "trip", title, date };
+                if (tripCountry) body.country_code = tripCountry;
+                const res = await fetch("/api/events", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ pet_id: PET_ID, created_by: USER_ID, ...body }),
                 });
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+                  setSaveStatus("error");
+                  setErrorMsg(err.error || `Ошибка (${res.status})`);
+                  return;
+                }
+                const eventData = await res.json();
+                setSaveStatus("saved");
+                haptic.notification("success");
+                if (tripCountry) {
+                  try {
+                    const templatesRes = await fetch(`/api/country-templates?country_code=${tripCountry}`);
+                    if (templatesRes.ok) {
+                      const templates = await templatesRes.json();
+                      const depDate = new Date(date);
+                      for (let i = 0; i < templates.length; i++) {
+                        const t = templates[i];
+                        const deadline = new Date(depDate);
+                        deadline.setDate(deadline.getDate() + t.days_before_departure);
+                        await fetch("/api/trip-documents", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            event_id: eventData.id,
+                            template_id: t.id,
+                            name: t.doc_name,
+                            status: "pending",
+                            deadline: deadline.toISOString().split("T")[0],
+                            note: t.description || null,
+                            order: i,
+                          }),
+                        });
+                      }
+                    }
+                  } catch {
+                    // silent
+                  }
+                }
+                setCalendarUrl(googleCalendarUrl({ title: `✈️ ${title}`, date, description: "GoBoop — поездка с питомцем" }));
               }} color="bg-blue-500" label={tf("trip.submit")} />
               {calendarUrl && saveStatus === "saved" && (
                 <a
@@ -474,6 +557,215 @@ export const QuickAddMenu = ({
             </p>
           </div>
         );
+      case "treatment":
+        return (
+          <div className="animate-slideUp">
+            <h3 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
+              <Pill className="w-5 h-5 text-rose-400" />
+              {tf("treatment.title")}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.type")}</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTreatmentType("medication")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      treatmentType === "medication" ? "bg-rose-500 text-white" : "bg-neutral-800 text-neutral-400"
+                    }`}
+                  >
+                    {tf("treatment.typeMedication")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTreatmentType("procedure")}
+                    className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      treatmentType === "procedure" ? "bg-purple-500 text-white" : "bg-neutral-800 text-neutral-400"
+                    }`}
+                  >
+                    {tf("treatment.typeProcedure")}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.caseLabel")}</label>
+                <select
+                  value={treatmentCaseId}
+                  onChange={(e) => setTreatmentCaseId(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                >
+                  <option value="new">{tf("treatment.caseNew")}</option>
+                  {treatmentCases.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </div>
+              {treatmentCaseId === "new" && (
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.caseTitle")}</label>
+                  <input
+                    type="text"
+                    value={treatmentCaseTitle}
+                    onChange={(e) => setTreatmentCaseTitle(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                    placeholder="Отит"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.name")}</label>
+                <input
+                  type="text"
+                  value={treatmentName}
+                  onChange={(e) => setTreatmentName(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                  placeholder={treatmentType === "medication" ? "Суролан" : "Антиаллергенный шампунь"}
+                />
+              </div>
+              {treatmentType === "medication" && (
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.dosage")}</label>
+                  <input
+                    type="text"
+                    value={treatmentDosage}
+                    onChange={(e) => setTreatmentDosage(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                    placeholder="3 капли"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.frequency")}</label>
+                <select
+                  value={treatmentFrequency}
+                  onChange={(e) => setTreatmentFrequency(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                >
+                  <option value="1 раз в день">{tf("treatment.freq1")}</option>
+                  <option value="2 раза в день">{tf("treatment.freq2")}</option>
+                  <option value="каждые 12 часов">{tf("treatment.freq12")}</option>
+                  <option value="3 раза в день">{tf("treatment.freq3")}</option>
+                  <option value="ежедневно">{tf("treatment.freqDaily")}</option>
+                  <option value="раз в 2 дня">{tf("treatment.freq2days")}</option>
+                </select>
+              </div>
+              {treatmentType === "procedure" && (
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.durationMin")}</label>
+                  <input
+                    type="number"
+                    value={treatmentDuration}
+                    onChange={(e) => setTreatmentDuration(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                    placeholder="5"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.instructions")}</label>
+                <input
+                  type="text"
+                  value={treatmentInstructions}
+                  onChange={(e) => setTreatmentInstructions(e.target.value)}
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                  placeholder={treatmentType === "procedure" ? "Оставить на 5 минут" : ""}
+                />
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.startDate")}</label>
+                  <input
+                    type="date"
+                    value={treatmentStartDate}
+                    onChange={(e) => setTreatmentStartDate(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-neutral-500 mb-1 block">{tf("treatment.endDate")}</label>
+                  <input
+                    type="date"
+                    value={treatmentEndDate}
+                    onChange={(e) => setTreatmentEndDate(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none"
+                  />
+                </div>
+              </div>
+              <SaveButton
+                onClick={async () => {
+                  if (!treatmentName.trim()) return;
+                  setSaveStatus("saving");
+                  setErrorMsg("");
+                  try {
+                    let caseId = treatmentCaseId;
+                    if (caseId === "new") {
+                      const title = treatmentCaseTitle.trim() || treatmentName;
+                      const startDate = treatmentStartDate || new Date().toISOString().split("T")[0];
+                      const caseRes = await fetch("/api/treatment-cases", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          pet_id: PET_ID,
+                          title,
+                          start_date: startDate,
+                          status: "active",
+                          created_by: USER_ID,
+                        }),
+                      });
+                      if (!caseRes.ok) throw new Error("Failed to create case");
+                      const caseData = await caseRes.json();
+                      caseId = caseData.id;
+                    }
+                    const startDate = treatmentStartDate || new Date().toISOString().split("T")[0];
+                    const endDate = treatmentEndDate || null;
+                    if (treatmentType === "medication") {
+                      const res = await fetch("/api/medications", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          treatment_case_id: caseId,
+                          name: treatmentName.trim(),
+                          dosage: treatmentDosage || null,
+                          frequency: treatmentFrequency,
+                          start_date: startDate,
+                          end_date: endDate,
+                          instructions: treatmentInstructions || null,
+                        }),
+                      });
+                      if (!res.ok) throw new Error("Failed to add medication");
+                    } else {
+                      const res = await fetch("/api/procedures", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          treatment_case_id: caseId,
+                          name: treatmentName.trim(),
+                          frequency: treatmentFrequency,
+                          duration_minutes: treatmentDuration ? parseInt(treatmentDuration, 10) : null,
+                          instructions: treatmentInstructions || null,
+                          start_date: startDate,
+                          end_date: endDate,
+                        }),
+                      });
+                      if (!res.ok) throw new Error("Failed to add procedure");
+                    }
+                    setSaveStatus("saved");
+                    haptic.notification("success");
+                    setTimeout(() => handleClose(), 1200);
+                  } catch (e) {
+                    setSaveStatus("error");
+                    haptic.notification("error");
+                    setErrorMsg(e instanceof Error ? e.message : "Ошибка сохранения");
+                  }
+                }}
+                color="bg-rose-500"
+                label={tf("treatment.submit")}
+              />
+              <ErrorMessage />
+            </div>
+          </div>
+        );
       default:
         return (
           <>
@@ -516,6 +808,7 @@ export const QuickAddMenu = ({
               <QuickActionBtn onClick={() => setQuickActionType("reminder")} icon={Bell} label={t("reminder")} color="text-lime-400" bg="bg-lime-500/10" delay="300" />
               <QuickActionBtn onClick={() => setQuickActionType("task")} icon={CheckSquare} label={t("task")} color="text-cyan-400" bg="bg-cyan-500/10" delay="350" />
               <QuickActionBtn onClick={() => setQuickActionType("weight")} icon={Scale} label={t("weight")} color="text-emerald-400" bg="bg-emerald-500/10" delay="400" />
+              <QuickActionBtn onClick={() => setQuickActionType("treatment")} icon={Pill} label={t("treatment")} color="text-rose-400" bg="bg-rose-500/10" delay="450" />
             </div>
           </>
         );

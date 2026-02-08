@@ -46,6 +46,14 @@
     "activeCase": "Текущее лечение",
     "since": "с",
     "daysLeft": "осталось {days} дн.",
+    "untilEnd": "до {date}",
+    "treatmentProgress": "Прогресс лечения",
+    "medications": "Лекарства",
+    "procedures": "Процедуры",
+    "taken": "Принял",
+    "markTaken": "Отметить приём",
+    "noActiveTreatment": "Нет активного лечения",
+    "addTreatmentHint": "Добавьте через \"+\" → Лечение",
     "weightTitle": "Вес",
     "currentWeight": "Текущий вес",
     "kg": "кг",
@@ -105,7 +113,8 @@
     "note": "Заметка",
     "reminder": "Напоминание",
     "task": "Задача",
-    "weight": "Вес"
+    "weight": "Вес",
+    "treatment": "Лечение"
   },
   "forms": {
     "trip": {
@@ -113,6 +122,8 @@
       "from": "Откуда",
       "to": "Куда",
       "date": "Дата выезда",
+      "country": "Страна назначения",
+      "countryPlaceholder": "Выберите страну",
       "submit": "Создать маршрут"
     },
     "vet": {
@@ -158,6 +169,29 @@
     "fileUpload": {
       "description": "Прикрепить файл PDF или DOC",
       "open": "Открыть файлы"
+    },
+    "treatment": {
+      "title": "Добавить в лечение",
+      "type": "Тип",
+      "typeMedication": "Лекарство",
+      "typeProcedure": "Процедура",
+      "caseLabel": "Кейс лечения",
+      "caseNew": "Новый кейс",
+      "caseTitle": "Название (диагноз)",
+      "name": "Название",
+      "dosage": "Дозировка",
+      "frequency": "Частота",
+      "freq1": "1 раз в день",
+      "freq2": "2 раза в день",
+      "freq12": "Каждые 12 часов",
+      "freq3": "3 раза в день",
+      "freqDaily": "Ежедневно",
+      "freq2days": "Раз в 2 дня",
+      "startDate": "Начало",
+      "endDate": "Окончание",
+      "instructions": "Инструкция (напр. оставить на 5 мин)",
+      "durationMin": "Длительность (мин)",
+      "submit": "Добавить"
     }
   }
 }

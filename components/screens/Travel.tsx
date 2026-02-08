@@ -15,10 +15,12 @@ import {
   PlusCircle,
   CalendarPlus,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 import { useTelegramContext } from "@/components/TelegramProvider";
 import { googleCalendarUrl } from "@/lib/calendar";
+import type { TripDocument } from "@/lib/types";
 
 const PET_ID = "003ab934-9f93-4f2b-aade-10a6fbc8ca40";
 
@@ -29,25 +31,12 @@ interface TripEvent {
   date: string;
   time: string | null;
   location: string | null;
+  country_code?: string;
 }
 
-// Fallback trip if no trips in DB
-const FALLBACK_TRIP = {
-  title: "Тбилиси → Берлин",
-  date: "2025-03-05",
-};
+const FALLBACK_TRIP = { title: "Тбилиси → Берлин", date: "2025-03-05" };
 
-type DocStatus = "done" | "urgent" | "pending" | "na";
-
-interface DocItem {
-  id: string;
-  name: string;
-  status: DocStatus;
-  note?: string;
-  deadline?: string;
-}
-
-const INITIAL_DOCS: DocItem[] = [
+const INITIAL_DOCS: Array<{ id: string; name: string; status: TripDocument["status"]; note?: string; deadline?: string }> = [
   { id: "chip", name: "Микрочип (ISO 11784)", status: "done", note: "№ 900123456789012" },
   { id: "passport", name: "Ветпаспорт международный", status: "done" },
   { id: "rabies", name: "Прививка от бешенства", status: "done", note: "15.03.2025" },
@@ -58,14 +47,26 @@ const INITIAL_DOCS: DocItem[] = [
   { id: "euhealth", name: "EU Health Certificate", status: "na", note: "Получить на границе/в аэропорту" },
 ];
 
+const getDisplayStatus = (doc: { status: string; deadline?: string }) => {
+  if (doc.status === "urgent" || doc.status === "done" || doc.status === "na") return doc.status;
+  if (doc.deadline) {
+    const days = Math.ceil((new Date(doc.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (days <= 3 && days >= 0) return "urgent";
+  }
+  return "pending";
+};
+
 export const Travel = () => {
   const t = useTranslations("travel");
   const { haptic } = useTelegramContext();
 
-  const [docs, setDocs] = useState<DocItem[]>(INITIAL_DOCS);
+  const [docs, setDocs] = useState<Array<TripDocument | (typeof INITIAL_DOCS)[0]>>(INITIAL_DOCS);
   const [trips, setTrips] = useState<TripEvent[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(true);
+  const [loadingDocs, setLoadingDocs] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
+  const [showAddDoc, setShowAddDoc] = useState(false);
+  const [newDocName, setNewDocName] = useState("");
 
   const fetchTrips = useCallback(async () => {
     setLoadingTrips(true);
@@ -73,7 +74,7 @@ export const Travel = () => {
       const res = await fetch(`/api/events?pet_id=${PET_ID}`);
       if (res.ok) {
         const data: TripEvent[] = await res.json();
-        setTrips(data.filter(e => e.type === "trip"));
+        setTrips(data.filter((e) => e.type === "trip"));
       }
     } catch {
       // silent
@@ -82,42 +83,104 @@ export const Travel = () => {
     }
   }, []);
 
+  const fetchDocs = useCallback(async (eventId: string) => {
+    setLoadingDocs(true);
+    try {
+      const res = await fetch(`/api/trip-documents?event_id=${eventId}`);
+      if (res.ok) {
+        const data: TripDocument[] = await res.json();
+        setDocs(data.length > 0 ? data : INITIAL_DOCS);
+      } else {
+        setDocs(INITIAL_DOCS);
+      }
+    } catch {
+      setDocs(INITIAL_DOCS);
+    } finally {
+      setLoadingDocs(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTrips();
   }, [fetchTrips]);
 
-  // Use the nearest future trip for countdown, or fallback
-  const activeTrip = trips.length > 0
-    ? trips.find(t => new Date(t.date) >= new Date()) || trips[0]
-    : null;
+  const activeTrip =
+    trips.length > 0 ? trips.find((t) => new Date(t.date) >= new Date()) || trips[0] : null;
   const countdownDate = activeTrip?.date || FALLBACK_TRIP.date;
   const countdownTitle = activeTrip?.title || FALLBACK_TRIP.title;
 
   useEffect(() => {
+    if (activeTrip) {
+      fetchDocs(activeTrip.id);
+    } else {
+      setDocs(INITIAL_DOCS);
+    }
+  }, [activeTrip?.id, fetchDocs]);
+
+  useEffect(() => {
     const tripDate = new Date(countdownDate);
-    const now = new Date();
-    const diff = Math.ceil((tripDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil((tripDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     setDaysLeft(Math.max(0, diff));
   }, [countdownDate]);
 
-  const toggleDoc = (id: string) => {
+  const toggleDoc = async (doc: TripDocument | (typeof INITIAL_DOCS)[0]) => {
     haptic.selection();
-    setDocs(prev => prev.map(d => {
-      if (d.id !== id) return d;
-      if (d.status === "done") return { ...d, status: "pending" as DocStatus };
-      if (d.status === "na") return d; // Can't toggle N/A
-      return { ...d, status: "done" as DocStatus };
-    }));
+    if (doc.status === "na") return;
+    const newStatus = doc.status === "done" ? "pending" : "done";
+    if ("event_id" in doc && doc.event_id) {
+      try {
+        await fetch("/api/trip-documents", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: doc.id, status: newStatus }),
+        });
+        setDocs((prev) =>
+          prev.map((d) => (d.id === doc.id ? { ...d, status: newStatus } : d))
+        );
+      } catch {
+        // silent
+      }
+    } else {
+      setDocs((prev) =>
+        prev.map((d) => (d.id === doc.id ? { ...d, status: newStatus } : d))
+      );
+    }
   };
 
-  const doneCount = docs.filter(d => d.status === "done").length;
-  const totalCheckable = docs.filter(d => d.status !== "na").length;
+  const addCustomDoc = async () => {
+    if (!newDocName.trim() || !activeTrip) return;
+    haptic.impact("medium");
+    try {
+      const res = await fetch("/api/trip-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_id: activeTrip.id,
+          name: newDocName.trim(),
+          status: "pending",
+          order: docs.length,
+        }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setDocs((prev) => [...prev, created]);
+        setNewDocName("");
+        setShowAddDoc(false);
+      }
+    } catch {
+      // silent
+    }
+  };
+
+  const docsWithStatus = docs.map((d) => ({ ...d, displayStatus: getDisplayStatus(d) }));
+  const doneCount = docsWithStatus.filter((d) => d.displayStatus === "done").length;
+  const totalCheckable = docsWithStatus.filter((d) => d.displayStatus !== "na").length;
   const progress = totalCheckable > 0 ? Math.round((doneCount / totalCheckable) * 100) : 0;
 
-  const urgentDocs = docs.filter(d => d.status === "urgent");
-  const pendingDocs = docs.filter(d => d.status === "pending");
-  const doneDocs = docs.filter(d => d.status === "done");
-  const naDocs = docs.filter(d => d.status === "na");
+  const urgentDocs = docsWithStatus.filter((d) => d.displayStatus === "urgent");
+  const pendingDocs = docsWithStatus.filter((d) => d.displayStatus === "pending");
+  const doneDocs = docsWithStatus.filter((d) => d.displayStatus === "done");
+  const naDocs = docsWithStatus.filter((d) => d.displayStatus === "na");
 
   return (
     <div className="space-y-5 animate-fadeIn pb-24">
@@ -171,11 +234,11 @@ export const Travel = () => {
       {urgentDocs.length > 0 && (
         <>
           <SectionHeader title={t("urgentSection")} />
-          {urgentDocs.map(doc => (
+          {urgentDocs.map((doc) => (
             <Card
               key={doc.id}
-              className="border-l-4 border-l-red-500 bg-red-500/5"
-              onClick={() => toggleDoc(doc.id)}
+              className="border-l-4 border-l-red-500 bg-red-500/5 cursor-pointer min-h-[44px]"
+              onClick={() => toggleDoc(doc)}
             >
               <div className="flex gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -201,13 +264,47 @@ export const Travel = () => {
       )}
 
       {/* Document Checklist */}
-      <SectionHeader title={t("docsSection")} />
+      <SectionHeader
+        title={t("docsSection")}
+        action={
+          activeTrip && (
+            <button
+              onClick={() => {
+                haptic.selection();
+                setShowAddDoc(!showAddDoc);
+              }}
+              className="text-neutral-500 hover:text-white transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )
+        }
+      />
+
+      {showAddDoc && activeTrip && (
+        <Card className="flex gap-2">
+          <input
+            type="text"
+            value={newDocName}
+            onChange={(e) => setNewDocName(e.target.value)}
+            placeholder="Название документа"
+            className="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl p-3 text-white text-sm focus:border-blue-500 outline-none"
+          />
+          <button
+            onClick={addCustomDoc}
+            disabled={!newDocName.trim()}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-medium rounded-xl"
+          >
+            Добавить
+          </button>
+        </Card>
+      )}
 
       {/* Pending */}
-      {pendingDocs.map(doc => (
+      {pendingDocs.map((doc) => (
         <Card
           key={doc.id}
-          onClick={() => toggleDoc(doc.id)}
+          onClick={() => toggleDoc(doc)}
           highlight
           className="flex items-center gap-3 active:scale-[0.98] transition-transform"
         >
@@ -228,10 +325,10 @@ export const Travel = () => {
       ))}
 
       {/* Done */}
-      {doneDocs.map(doc => (
+      {doneDocs.map((doc) => (
         <Card
           key={doc.id}
-          onClick={() => toggleDoc(doc.id)}
+          onClick={() => toggleDoc(doc)}
           className="flex items-center gap-3 opacity-70 active:scale-[0.98] transition-transform"
         >
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
@@ -245,7 +342,7 @@ export const Travel = () => {
       ))}
 
       {/* N/A */}
-      {naDocs.map(doc => (
+      {naDocs.map((doc) => (
         <Card key={doc.id} className="flex items-center gap-3 opacity-50">
           <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center shrink-0">
             <FileText className="w-4 h-4 text-neutral-600" />
