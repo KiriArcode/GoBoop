@@ -31,7 +31,11 @@
     "family": "Семья",
     "details": "Подробнее",
     "familyLeader": "Муж — молодец!",
-    "familyLeaderSub": "Выполнил утреннюю рутину"
+    "familyLeaderSub": "Выполнил утреннюю рутину",
+    "shoppingTitle": "Покупки",
+    "notesTitle": "Заметки",
+    "noNotes": "Пока нет заметок",
+    "addNoteHint": "Напишите боту или нажмите \"+\" → Заметка"
   },
   "health": {
     "title": "Здоровье",

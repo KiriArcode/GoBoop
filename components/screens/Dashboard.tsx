@@ -13,6 +13,8 @@ import {
   Trophy,
   Zap,
   Calendar,
+  FileText,
+  RefreshCw,
 } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui";
 
@@ -25,6 +27,22 @@ interface EventItem {
   date: string;
   time: string | null;
   location: string | null;
+}
+
+interface NoteItem {
+  id: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+}
+
+interface ShoppingItem {
+  id: string;
+  title: string;
+  price: number | null;
+  status: string;
+  created_by: string;
+  created_at: string;
 }
 
 interface DashboardProps {
@@ -44,6 +62,9 @@ export const Dashboard = ({
 }: DashboardProps) => {
   const t = useTranslations("dashboard");
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [shopping, setShopping] = useState<ShoppingItem[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -57,9 +78,38 @@ export const Dashboard = ({
     }
   }, []);
 
+  const fetchNotes = useCallback(async () => {
+    setLoadingNotes(true);
+    try {
+      const res = await fetch(`/api/notes?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotes(data);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingNotes(false);
+    }
+  }, []);
+
+  const fetchShopping = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/shopping?pet_id=${PET_ID}`);
+      if (res.ok) {
+        const data = await res.json();
+        setShopping(data);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    fetchNotes();
+    fetchShopping();
+  }, [fetchEvents, fetchNotes, fetchShopping]);
 
   const upcomingVet = events.find(e => e.type === "vet");
   const upcomingTrip = events.find(e => e.type === "trip");
@@ -275,6 +325,75 @@ export const Dashboard = ({
         </div>
         <Trophy className="w-5 h-5 text-amber-500/50" />
       </Card>
+
+      {/* Shopping list */}
+      {shopping.length > 0 && (
+        <>
+          <SectionHeader title={t("shoppingTitle")} />
+          <Card>
+            <div className="space-y-2">
+              {shopping.slice(0, 5).map((item) => (
+                <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-neutral-800 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{item.status === "bought" ? "✅" : "🛒"}</span>
+                    <span className={`text-sm ${item.status === "bought" ? "text-neutral-500 line-through" : "text-white"}`}>
+                      {item.title}
+                    </span>
+                  </div>
+                  {item.price && (
+                    <span className="text-neutral-500 text-xs">{item.price} ₽</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Recent notes */}
+      <SectionHeader
+        title={t("notesTitle")}
+        action={
+          <button
+            onClick={fetchNotes}
+            className="text-neutral-500 hover:text-white transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingNotes ? "animate-spin" : ""}`} />
+          </button>
+        }
+      />
+      {notes.length > 0 ? (
+        <div className="space-y-2">
+          {notes.slice(0, 5).map((note) => (
+            <Card key={note.id} className="group">
+              <div className="flex items-start gap-3">
+                <FileText className="w-4 h-4 text-neutral-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-neutral-300 text-sm">{note.content}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-neutral-600 text-xs">{note.created_by}</span>
+                    <span className="text-neutral-700 text-xs">•</span>
+                    <span className="text-neutral-600 text-xs">
+                      {new Date(note.created_at).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="text-center py-6">
+          <FileText className="w-6 h-6 text-neutral-700 mx-auto mb-2" />
+          <p className="text-neutral-500 text-sm">{t("noNotes")}</p>
+          <p className="text-neutral-600 text-xs mt-1">{t("addNoteHint")}</p>
+        </Card>
+      )}
     </div>
   );
 };

@@ -31,7 +31,11 @@
     "family": "Family",
     "details": "Details",
     "familyLeader": "Husband — great job!",
-    "familyLeaderSub": "Completed morning routine"
+    "familyLeaderSub": "Completed morning routine",
+    "shoppingTitle": "Shopping",
+    "notesTitle": "Notes",
+    "noNotes": "No notes yet",
+    "addNoteHint": "Write to the bot or tap \"+\" → Note"
   },
   "health": {
     "title": "Health",
